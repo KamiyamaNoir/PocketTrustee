@@ -1,0 +1,4 @@
+rich
+cmd2
+pyserial
+pillow

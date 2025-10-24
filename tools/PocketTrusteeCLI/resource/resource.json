@@ -1,0 +1,41 @@
+{
+    "version": "1.0.0",
+    "directory": [
+        "gui_fg",
+        "gui_idcard",
+        "gui_lock",
+        "gui_main",
+        "gui_manage",
+        "gui_pwd",
+        "gui_trans",
+        "idcards",
+        "namecards",
+        "otp",
+        "passwords",
+        "texture",
+        "wifi"
+    ],
+    "package": {
+        "device.info": "device.info.bin",
+        "gui_fg/authen": "fg_authen.bin",
+        "gui_fg/pass": "fg_pass.bin",
+        "gui_fg/fil": "fg_fail.bin",
+        "gui_fg/fgmn": "fgmanage.bin",
+        "gui_idcard/emulate": "id_emulate.bin",
+        "gui_idcard/read_idcard": "id_card.bin",
+        "gui_lock/locked": "lock.bin",
+        "gui_lock/pin": "PIN.bin",
+        "gui_main/iccard": "ic_card.bin",
+        "gui_main/main": "mainpage.bin",
+        "gui_menu": "menu-page1.bin",
+        "gui_pwd/pwdgen": "pwd_generate.bin",
+        "gui_pwd/saved": "saved.bin",
+        "gui_trans/trans": "transparent_mode.bin",
+        "gui_manage/host": "host.bin",
+        "gui_manage/trust": "trust.bin",
+        "gui_manage/respond": "responding.bin",
+        "texture/iccard": "texture_card.bin",
+        "namecards/demo.ncard": "namecard.bin",
+        "wifi/demo.wifi": "wifi.bin"
+    }
+}
