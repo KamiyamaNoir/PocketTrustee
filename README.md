@@ -17,12 +17,11 @@
 1. 下载 [STM32 CubeCLT](https://www.st.com/en/development-tools/stm32cubeclt.html) 工具链  
 确保你的工具链已经添加到PATH环境变量中
 2. 将命令行工具转到项目目录下，逐句执行：  
-```
-cmake --preset "Relsase"
-cd build/Release
-ninja
-```
-在build/Release目录下，PocketTrustee.elf 即编译产物   
+`cmake --preset "Debug"`  
+`cd build/Debug`  
+`ninja`  
+在build/Debug目录下，PocketTrustee.elf 即编译产物  
+**不要编译Release版，代码优化会带来无法预测的bug**
 3. 使用 [STM32 CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html) 工具将PocketTrustee.elf 烧录到芯片上   
 4. 连接设备和电脑，应当能在设备管理器里看到新的串口设备   
 5. 使用python运行`tools/PocketTrusteeCLI/main.py`，并执行命令`connect -a --init`  
@@ -30,5 +29,5 @@ ninja
 
 
 ## PocketTrusteeCLI
-专为PocketTrustee设计的CLI工具，可以用于添加/删除/编辑 密码，ID卡，TOTP等  
+专为PocketTrustee设计的CLI工具，可以用于添加/删除/编辑 密码，ID卡，TOTP，以及进行数据备份和还原等  
 请见[PocketTrusteeCLI](tools/PocketTrusteeCLI/README.md)
