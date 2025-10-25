@@ -19,7 +19,7 @@
         "device.info": "device.info.bin",
         "gui_fg/authen": "fg_authen.bin",
         "gui_fg/pass": "fg_pass.bin",
-        "gui_fg/fil": "fg_fail.bin",
+        "gui_fg/fail": "fg_fail.bin",
         "gui_fg/fgmn": "fgmanage.bin",
         "gui_idcard/emulate": "id_emulate.bin",
         "gui_idcard/read_idcard": "id_card.bin",

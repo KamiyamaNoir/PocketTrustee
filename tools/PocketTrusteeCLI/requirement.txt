@@ -2,3 +2,5 @@ rich
 cmd2
 pyserial
 pillow
+cbor2
+pycryptodome
