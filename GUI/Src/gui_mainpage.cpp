@@ -175,13 +175,12 @@ void render_cds_icon(Scheme& sche, Control& self, bool onSelect)
 {
     float vot = bsp_adc::getVoltageBattery();
     bool charging = HAL_GPIO_ReadPin(FLG_CHG_GPIO_Port, FLG_CHG_Pin) == GPIO_PIN_RESET;
-    if (vot < 3.8f)
-    {
-        sche.texture(icon_battery_low, 9, 110, 16, 16);
-    }
+    char vot_display[6];
+    sprintf(vot_display, "%.2fv", vot);
+    sche.put_string(4, 110, ASCII_1608, vot_display);
     if (charging)
     {
-        sche.texture(icon_battery_charging, 30, 110, 16, 16);
+        sche.texture(icon_battery_charging, 50, 110, 16, 16);
     }
 }
 

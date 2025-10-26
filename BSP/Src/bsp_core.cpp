@@ -9,7 +9,6 @@
 #include "host.h"
 #include "usart.h"
 #include "lfs_base.h"
-#include "aes.h"
 
 extern gui::Display gui_main;
 
@@ -30,7 +29,7 @@ void HAL_Delay(uint32_t Delay)
     osDelay(Delay);
 }
 
-static uint8_t uart_buffer[128];
+// static uint8_t uart_buffer[128];
 
 void sys_startup()
 {
@@ -48,7 +47,7 @@ void sys_startup()
     in_managermode = false;
     usbd_deinit();
 
-    HAL_UARTEx_ReceiveToIdle_IT(&huart1, uart_buffer, sizeof(uart_buffer));
+    // HAL_UARTEx_ReceiveToIdle_IT(&huart1, uart_buffer, sizeof(uart_buffer));
     fingerprint_uart_callback(0);
 }
 
@@ -84,7 +83,7 @@ void StartADCSample(void const* argument)
 {
     for (;;)
     {
-        osDelay(100);
+        // osDelay(100);
         bsp_adc::start_convert();
         osDelay(500);
         bsp_adc::stop_convert();
@@ -101,7 +100,6 @@ void PostSleepProcessing(uint32_t ulExpectedIdleTime)
 {
     SystemClockConfig(core::SCLK_FULLSPEED);
     vTaskResume(ADCSampleTaskHandle);
-    // MX_USART1_UART_Init();
 }
 
 void SystemClockConfig(core::SYSTEM_CLK clk)

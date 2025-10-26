@@ -1,6 +1,5 @@
 #include "bsp_finger.h"
 #include "gui.h"
-#include "gui_resource.h"
 #include "fingerprint.h"
 
 #define GUI_FINGERPRINT_CTRNUM 4
@@ -19,7 +18,6 @@ void clickon_fgmanage_test(Window& wn, Display& dis, ui_operation& opt);
 void clickon_fgmanage_del(Window& wn, Display& dis, ui_operation& opt);
 extern void cb_backto_menup1(Window& wn, Display& dis, ui_operation& opt);
 
-void render_check(Scheme& sche, Control& self, bool onSelect);
 extern void render_rectangle(Scheme& sche, Control& self, bool onSelect);
 
 Control controls_fingerprint[GUI_FINGERPRINT_CTRNUM]
@@ -119,9 +117,4 @@ void clickon_fgmanage_del(Window& wn, Display& dis, ui_operation& opt)
         .result_callback = nullptr,
     };
     Fingerprint::clearAllFinger(&fg_req);
-}
-
-void render_check(Scheme& sche, Control& self, bool onSelect)
-{
-    sche.texture(icon_check,124, 40, 48, 48);
 }

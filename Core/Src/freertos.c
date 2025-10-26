@@ -147,7 +147,6 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
   osThreadSuspend(manager_taskHandle);
   osThreadSuspend(IdealTaskHandle);
-  osThreadSuspend(ADCSampleTaskHandle);
   /* USER CODE END RTOS_THREADS */
 
 }

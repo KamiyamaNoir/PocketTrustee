@@ -18,16 +18,16 @@ void HAL_ADC_LevelOutOfWindowCallback(ADC_HandleTypeDef *hadc)
 void bsp_adc::start_convert()
 {
     MX_ADC1_Init();
-    ADC_AnalogWDGConfTypeDef awdg = {
-        .WatchdogNumber = ADC_ANALOGWATCHDOG_1,
-        .WatchdogMode = ADC_ANALOGWATCHDOG_SINGLE_REG,
-        .Channel = ADC_CHANNEL_12,
-        .ITMode = ENABLE,
-        .HighThreshold = 125,
-        .LowThreshold = 0,
-    };
+    // ADC_AnalogWDGConfTypeDef awdg = {
+    //     .WatchdogNumber = ADC_ANALOGWATCHDOG_1,
+    //     .WatchdogMode = ADC_ANALOGWATCHDOG_SINGLE_REG,
+    //     .Channel = ADC_CHANNEL_12,
+    //     .ITMode = ENABLE,
+    //     .HighThreshold = 125,
+    //     .LowThreshold = 0,
+    // };
     HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
-    HAL_ADC_AnalogWDGConfig(&hadc1, &awdg);
+    // HAL_ADC_AnalogWDGConfig(&hadc1, &awdg);
     HAL_ADC_Start_DMA(&hadc1, reinterpret_cast<uint32_t*>(adc_buffer), 3);
 }
 
