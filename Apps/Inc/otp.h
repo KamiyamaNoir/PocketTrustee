@@ -3,28 +3,25 @@
 
 #include "main.h"
 
-__PACKED_STRUCT TOTP_File_Struct
-{
-    char name[32];
-    uint8_t key[32];
-};
-
-class TOTP_File
+class OTP_TOTP
 {
 public:
-    explicit TOTP_File(const char* path);
-    explicit TOTP_File(const TOTP_File_Struct* file);
-    TOTP_File();
-    ~TOTP_File() = default;
+    enum {TOTP_NAME_MAX=26};
+
+    explicit OTP_TOTP(const char* totp_name);
+    OTP_TOTP(const char* name, const uint8_t* key, uint8_t key_length);
+    ~OTP_TOTP() = default;
 
     int calculate(uint32_t* pResult);
-    static int save(TOTP_File_Struct* src);
+    // int save();
 
     const char* getName() const;
 private:
-    char path[48];
-    char name[32];
+    char name[TOTP_NAME_MAX];
     uint8_t key[20];
+    uint8_t key_length = 20;
+    uint8_t step = 30;
+    uint8_t otp_len = 6;
 };
 
 #endif

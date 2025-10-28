@@ -50,7 +50,7 @@ namespace crypto
 
     CRYPTO_RESULT skeygen(const KeygenConfiguration* cfg, char* dst);
 
-    CRYPTO_RESULT totp_calculate(uint8_t key[20], uint32_t* result, uint8_t step=30, uint32_t mask=1000000UL);
+    CRYPTO_RESULT totp_calculate(uint8_t* key, uint8_t key_length, uint32_t* result, uint8_t step=30, uint32_t mask=1000000UL);
 }
 
 #endif //CRYPTO_BASE_H

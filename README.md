@@ -10,7 +10,7 @@
 
 
 ## 硬件设计
-硬件设计发布在[OSHW Hub](https://oshwhub.com/)上  
+硬件设计发布在[OSHW Hub](https://oshwhub.com/reblock/pocket_trustee)上  
 
 
 ## 编译，下载，初始化说明

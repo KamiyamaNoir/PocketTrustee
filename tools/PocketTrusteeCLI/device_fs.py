@@ -57,14 +57,16 @@ class DeviceFS:
             "password": password,
         })
     
-    def add_totp(self, name: str, key: bytes):
+    def add_totp(self, name: str, key: bytes, step: int=30, num_len: int=6):
         if len(key) != 20:
             raise ValueError("Wrong key")
         if len(name) > 25:
             raise ValueError("Too long name")
         self.totp.append({
             "name": name,
-            "key": key
+            "key": key,
+            "step": step,
+            "num": num_len
         })
         
     def add_idcard(self, name: str, manchester: bytes):

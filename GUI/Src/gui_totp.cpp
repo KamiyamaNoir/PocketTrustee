@@ -8,6 +8,7 @@
 #define GUI_TOTP_CTRNUM 1
 
 #define TOTP_SEL_PAGE_SIZE 5
+#define TOTP_SEL_PAGE_MAX 1
 
 using namespace gui;
 
@@ -50,30 +51,52 @@ Window wn_totp_sel(&res_totp_sel, controls_totp_sel, GUI_TOTP_SEL_CTRNUM);
 Window wn_totp(&res_totp, controls_totp, GUI_TOTP_CTRNUM);
 
 constexpr char totp_basepath[] = "otp/";
-static TOTP_File current_totp {};
-static int totp_item_index = -1;
-static uint8_t totp_item_count = 0;
-static uint32_t totp_item_map[TOTP_SEL_PAGE_SIZE];
+static int onselect_file_index = -1;
+static uint8_t totp_file_count = 0;
+static uint32_t totp_file_index_map[TOTP_SEL_PAGE_SIZE * TOTP_SEL_PAGE_MAX];
+static char totp_file_name_map[TOTP_SEL_PAGE_SIZE][OTP_TOTP::TOTP_NAME_MAX];
 
-static void load_totp()
+
+void totp_name_map_update()
 {
-    if (totp_item_index >= totp_item_count || totp_item_index < 0)
-    {
+    uint8_t page_start;
+    if (totp_file_count == 0)
         return;
+    if (onselect_file_index < 0)
+        page_start = 0;
+    else
+        page_start = (onselect_file_index / TOTP_SEL_PAGE_SIZE) * TOTP_SEL_PAGE_SIZE;
+    uint8_t page_end = page_start + TOTP_SEL_PAGE_SIZE;
+    if (page_end > totp_file_count - 1)
+    {
+        page_end = totp_file_count - 1;
     }
     auto dir = LittleFS::fs_dir_handler(totp_basepath);
-    dir.seek(totp_item_map[totp_item_index]);
-    lfs_info info;
-    dir.next(&info);
-    char path[32] = "otp/";
-    strcat(path, info.name);
-    current_totp = TOTP_File(path);
+    for (uint8_t i = 0; i < TOTP_SEL_PAGE_SIZE; i++)
+    {
+        if (page_start + i > page_end)
+        {
+            totp_file_name_map[i][0] = '\0';
+            continue;
+        }
+
+        //NOLINTNEXTLINE
+        lfs_info info;
+        dir.seek(totp_file_index_map[page_start]);
+        dir.next(&info);
+
+        uint8_t len = strlen(info.name) - 5;
+        memcpy(totp_file_name_map[i], info.name, len);
+        totp_file_name_map[i][len] = '\0';
+
+        page_start++;
+    }
 }
 
 void totp_dir_update()
 {
-    totp_item_count = 0;
-    totp_item_index = -1;
+    totp_file_count = 0;
+    onselect_file_index = -1;
     auto dir = LittleFS::fs_dir_handler(totp_basepath);
     int dir_count = dir.count();
     if (dir_count < 0) return;
@@ -81,7 +104,8 @@ void totp_dir_update()
 
     for (int i = 0; i < dir_count; i++)
     {
-        lfs_info info {};
+        //NOLINTNEXTLINE
+        lfs_info info;
         uint32_t pos = dir.tell();
         dir.next(&info);
         if (info.type == LFS_TYPE_DIR) continue;
@@ -89,9 +113,11 @@ void totp_dir_update()
         if (len < 5) continue;
         if (memcmp(info.name + len - 5, ".totp", 5) != 0)
             continue;
-        totp_item_map[totp_item_count] = pos;
-        totp_item_count++;
+        totp_file_index_map[totp_file_count] = pos;
+        totp_file_count++;
     }
+
+    totp_name_map_update();
 }
 
 void clickon_totp_sel_exit(Window& wn, Display& dis, ui_operation& opt)
@@ -105,30 +131,28 @@ void clickon_totp_sel(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt == OP_ENTER)
     {
-        load_totp();
         dis.switchFocusLag(&wn_totp);
         dis.refresh_count = 0;
         return;
     }
-    if (totp_item_count == 0) return;
-    if (opt == OP_UP && totp_item_index == 0)
+    if (totp_file_count == 0) return;
+    if (opt == OP_UP && onselect_file_index == 0)
     {
-        totp_item_index = -1;
+        onselect_file_index = -1;
         return;
     }
-    if (opt == OP_DOWN && totp_item_index == totp_item_count-1)
+    if (opt == OP_DOWN && onselect_file_index == totp_file_count-1)
     {
-        totp_item_index = -1;
+        onselect_file_index = -1;
         return;
     }
-    totp_item_index += opt;
+    onselect_file_index += opt;
     opt = OP_NULL;
 }
 
 void clickon_totp_exit(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    current_totp = {};
     dis.switchFocusLag(&wn_totp_sel);
     dis.refresh_count = 0;
 }
@@ -142,24 +166,18 @@ void render_totp_sel(Scheme& sche, Control& self, bool onSelect)
     {
         sche.rectangle(self.x, self.y, self.w, self.h, 2);
     }
-    else if (totp_item_index < 0)
+    else if (onselect_file_index < 0)
     {
-        totp_item_index = 0;
+        onselect_file_index = 0;
     }
     // Display item
-    auto dir = LittleFS::fs_dir_handler(totp_basepath);
     for (uint8_t i = 0; i < TOTP_SEL_PAGE_SIZE; i++)
     {
-        lfs_info info;
-        if (i >= totp_item_count) break;
-        dir.seek(totp_item_map[i]);
-        dir.next(&info);
-        char name[25];
-        uint8_t name_size = strlen(info.name) - 5;
-        memcpy(name, info.name, name_size);
-        name[name_size] = '\0';
+        const char* name = totp_file_name_map[i];
+        if (name[0] == '\0')
+            break;
         sche.put_string(4, 5+20*i, ASCII_1608, name);
-        if (i == totp_item_index)
+        if (i == onselect_file_index)
         {
             sche.rectangle(3, 5+20*i, 201, 17, 1);
         }
@@ -175,21 +193,22 @@ void render_totp(Scheme& sche, Control& self, bool onSelect)
     {
         sche.rectangle(self.x, self.y, self.w, self.h, 2);
     }
-    uint8_t off =  GUI_WIDTH/2 - 4*strlen(current_totp.getName());
+
+    auto totp = OTP_TOTP(totp_file_name_map[onselect_file_index % TOTP_SEL_PAGE_SIZE]);
+    uint8_t off =  GUI_WIDTH/2 - 4*strlen(totp.getName());
     sche.rectangle(68, 93, 160, 2)
-        .put_string(off, 36, ASCII_1608, current_totp.getName());
-    uint32_t totp = 0;
-    int result = current_totp.calculate(&totp);
+        .put_string(off, 36, ASCII_1608, totp.getName());
+    uint32_t calculate = 0;
+    int result = totp.calculate(&calculate);
     if (result == 0)
     {
         char text[7] = {
-            static_cast<char>((totp % 1000000UL) / 100000),
-            static_cast<char>((totp % 100000UL) / 10000),
-            static_cast<char>((totp % 10000UL) / 1000),
-            static_cast<char>((totp % 1000UL) / 100),
-            static_cast<char>((totp % 100UL) / 10),
-            static_cast<char>((totp % 10UL) / 1),
-            '\0'
+            static_cast<char>((calculate % 1000000UL) / 100000),
+            static_cast<char>((calculate % 100000UL) / 10000),
+            static_cast<char>((calculate % 10000UL) / 1000),
+            static_cast<char>((calculate % 1000UL) / 100),
+            static_cast<char>((calculate % 100UL) / 10),
+            static_cast<char>((calculate % 10UL) / 1),
         };
         for (auto& i : text)
         {

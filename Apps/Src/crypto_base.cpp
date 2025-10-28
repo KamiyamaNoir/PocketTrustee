@@ -92,7 +92,7 @@ CRYPTO_RESULT crypto::skeygen(const KeygenConfiguration* cfg, char* dst)
     return CRYPTO_SUCCESS;
 }
 
-CRYPTO_RESULT crypto::totp_calculate(uint8_t key[20], uint32_t* result, uint8_t step, uint32_t mask)
+CRYPTO_RESULT crypto::totp_calculate(uint8_t* key, uint8_t key_length, uint32_t* result, uint8_t step, uint32_t mask)
 {
     rtc::UnixTime timestamp = 0;
     rtc::TimeDate dt {};
@@ -109,7 +109,7 @@ CRYPTO_RESULT crypto::totp_calculate(uint8_t key[20], uint32_t* result, uint8_t 
     };
     uint8_t digest[20];
     size_t computed = 0;
-    cmox_mac_compute(CMOX_HMAC_SHA1_ALGO, message, 8, key, 20, nullptr, 0, digest, 20, &computed);
+    cmox_mac_compute(CMOX_HMAC_SHA1_ALGO, message, 8, key, key_length, nullptr, 0, digest, 20, &computed);
 
     if (computed != 20) return CRYPTO_FAILED;
 

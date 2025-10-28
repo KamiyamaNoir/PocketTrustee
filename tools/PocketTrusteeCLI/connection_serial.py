@@ -5,12 +5,13 @@ import binascii
 import serial
 import cbor2
 from Crypto.Cipher import AES
-from rich_console import console
 from rich.progress import Progress
+from rich_console import console
 
 
 class Connection:
     aes = None
+    device_name = ''
     
     def __init__(self, com_port):
         self.ser = serial.Serial(port=com_port, baudrate=115200)
@@ -101,6 +102,7 @@ class Connection:
                 self.send_data(cbor2.dumps({
                     "timestamp": int(time())
                 }))
+                self.device_name = resp['device']
                 return resp['device']
             raise TimeoutError("Unknown")
         
@@ -151,21 +153,14 @@ class Connection:
         # check key
         if len(key) != 20 and len(key) != 16:
             raise Exception("Unrecognized key")
-        if len(key) == 16:
-            key = bytearray(key)
-            key.extend(b'\x00\x00\x00\x00')
-        # send request
-        self.send_data(cbor2.dumps({
-            "req": "totp-add",
-            "user": f"{socket.gethostname()[:24]}",
-            "name": name,
-            "key": key
-        }))
-        # polling for data
-        nread = self.wait_data()
-        if nread is None:
-            raise TimeoutError("设备未响应")
-        console.print(nread.decode(encoding='ascii'))
+        fbytes = cbor2.dumps([
+            key,
+            30,
+            6
+        ])
+        enbytes = self.aes.encrypt(self.aes_pad(fbytes))
+        # send file
+        self.send_su_file_write(f'otp/{name}.totp', enbytes)
     
     def send_totp_delete(self, name: str):
         self.clear_buffer()
@@ -192,7 +187,6 @@ class Connection:
             console.print(item[:-5])
             
     def send_pwd_add(self, name: str, pwd: str, account: str):
-        Tpath = f'passwords/{name}.pwd'
         # check length
         if len(pwd) > 25 or len(account) > 25:
             raise ValueError("密码或账户太长")
@@ -202,14 +196,14 @@ class Connection:
         if f'{name}.pwd' in pwd_ls:
             raise SystemError("该密码已被创建,请使用modify或delete")
         # fill in cbor sheet
-        Fbytes = cbor2.dumps([
+        fbytes = cbor2.dumps([
             account,
             pwd
         ])
         # write
-        Enbyte = self.aes_pad(Fbytes)
-        Enbyte = self.aes.encrypt(Enbyte)
-        self.send_su_file_write(Tpath, Enbyte)
+        enbyte = self.aes_pad(fbytes)
+        enbyte = self.aes.encrypt(enbyte)
+        self.send_su_file_write(f'passwords/{name}.pwd', enbyte)
         
     def send_pwd_modify(self, name: str, pwd: str | None, account: str | None, rename: str | None):
         Rpath = f'passwords/{name}.pwd'
@@ -386,6 +380,8 @@ class Connection:
                 nread = self.wait_data(timeout=5000)
                 if nread is None:
                     raise TimeoutError("设备未响应 - Transmit")
+                # rich progress
+                progress.update(task, advance=len(pak))
                 if nread != b'ok':
                     # 有时候会把ok和CRC一起收到...虽然可以加一个同步，不过还是这样方便些（
                     if nread[:2] != b'ok':
@@ -393,8 +389,6 @@ class Connection:
                     if nread[2:] != int.to_bytes(binascii.crc32(fbytes), 4):
                         raise SystemError("CRC校验错误")
                     return
-                # rich progress
-                progress.update(task, advance=len(pak))
         # crc_check
         expected = int.to_bytes(binascii.crc32(fbytes), 4)
         nread = self.wait_data(timeout=2000)
@@ -430,7 +424,7 @@ class Connection:
             self.send_data(b'ok')
             # print
             transmit += len(resp['data'])
-            print(f"Receive {transmit}")
+            print(f"\rReceive {transmit}")
             if not resp['more']:
                 break
         # crc_check

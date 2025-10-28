@@ -10,7 +10,6 @@
 #include "lfs_base.h"
 #include "cmsis_os.h"
 #include "bsp_rtc.h"
-#include "otp.h"
 #include "pin_code.h"
 
 // CDC Transmit and Receive
@@ -59,7 +58,6 @@ static bool check_user(zcbor_state_t* state);
 static bool command_connect_req();
 static bool invoke_disconnect();
 static bool invoke_device_rename(zcbor_state_t* state);
-static bool invoke_totp_add(zcbor_state_t* state);
 
 static bool invoke_fswrite(zcbor_state_t* zcbor_state);
 static bool invoke_fsread(zcbor_state_t* zcbor_state);
@@ -189,10 +187,6 @@ uint8_t hostCommandInvoke(bool from_startup)
     {
         return invoke_device_rename(zcbor_state);
     }
-    if (IS_COMMAND(require_desc, "totp-add"))
-    {
-        return invoke_totp_add(zcbor_state);
-    }
     /* ====== Super Debug Command ======*/
     if (IS_COMMAND(require_desc, "su_ls"))
     {
@@ -279,27 +273,6 @@ bool invoke_device_rename(zcbor_state_t* state)
     CHECK_SUCCESS(success);
     ZCBOR_TO_CSTRING(zcbor_str, device_name);
     send(zcbor_str.value, zcbor_str.len);
-    return true;
-}
-
-bool invoke_totp_add(zcbor_state_t* state)
-{
-    TOTP_File_Struct ftotp = {};
-    zcbor_string zcbor_str = {};
-    bool success = false;
-    success = zcbor_tstr_expect_ptr(state, "name", 4);
-    success = success && zcbor_tstr_decode(state, &zcbor_str);
-    CHECK_SUCCESS(success);
-    ZCBOR_TO_CSTRING(zcbor_str, ftotp.name);
-
-    success = zcbor_tstr_expect_ptr(state, "key", 3);
-    success = success && zcbor_bstr_decode(state, &zcbor_str);
-    CHECK_SUCCESS(success);
-    memcpy(ftotp.key, zcbor_str.value, 20);
-
-    int err = TOTP_File::save(&ftotp);
-    if (err < 0) return false;
-    send("success", 7);
     return true;
 }
 

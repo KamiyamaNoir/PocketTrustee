@@ -1,6 +1,7 @@
 import base64
 import os
 import json
+import cbor2
 from cmd2 import (
     Cmd,
     with_argparser,
@@ -116,6 +117,31 @@ class PocketTrusteeCLI(Cmd):
             console.print(f"连接请求被拒绝,{e}", style='bold red')
             return
         
+    def invoke_backup(self):
+        dfs = DeviceFS.load_from_file(f'./devices/{self.connection.device_name}.pkt')
+        # Load passwords
+        dfs.passwords.clear()
+        file_ls = self.connection.send_su_file_ls('passwords/').split('\n')
+        for file_name in file_ls:
+            if file_name[-4:] != '.pwd':
+                continue
+            fbytes = self.connection.send_su_file_read(f'passwords/{file_name}')
+            fb_encrypto = self.connection.aes.decrypt(fbytes)
+            flist = cbor2.loads(fb_encrypto)
+            dfs.add_password(file_name[:-4], flist[0], flist[1])
+            console.print(f'Backup: {file_name}')
+        # Load totp
+        dfs.passwords.clear()
+        file_ls = self.connection.send_su_file_ls('otp/').split('\n')
+        for file_name in file_ls:
+            if file_name[-5:] != '.totp':
+                continue
+            fbytes = self.connection.send_su_file_read(f'otp/{file_name}')
+            fb_encrypto = self.connection.aes.decrypt(fbytes)
+            flist = cbor2.loads(fb_encrypto)
+            dfs.add_totp(file_name[:-5], flist[0], flist[1], flist[2])
+            console.print(f'Backup: {file_name}')
+        
     def invoke_init(self):
         finfo = open('./resource/resource.json', 'r', encoding='utf-8')
         finfo = json.loads(finfo.read())
@@ -152,7 +178,7 @@ class PocketTrusteeCLI(Cmd):
     # ====== Device Backup ======
     def do_backup(self, args):
         try:
-            pass
+            self.invoke_backup()
         except Exception as e:
             self.poutput(e)
             

@@ -1,6 +1,5 @@
 #include "bsp_finger.h"
 #include "usart.h"
-#include "simple_buffer.h"
 
 using namespace finger;
 
@@ -50,31 +49,31 @@ static uint16_t polling_for_response(uint16_t timeout=1000)
     return receive_size;
 }
 
-static uint8_t WriteRegister(uint8_t addr, uint8_t content)
-{
-    uint8_t payload[] = {
-        // Head
-        0xEF, 0x01,
-        // Device Address
-        0xFF, 0xFF, 0xFF, 0xFF,
-        // Command Package
-        0x01,
-        // Package Length
-        0x00, 0x05,
-        // Command
-        0x0E,
-        // Register and Content
-        addr, content,
-        // Check sum
-        0x00, 0x00,
-    };
-    CALC_CHECKSUM(payload);
-    TransmitData(payload, sizeof(payload));
-    uint16_t nread = polling_for_response();
-    if (nread != 12)
-        return 1;
-    return finger_buffer[9];
-}
+// static uint8_t WriteRegister(uint8_t addr, uint8_t content)
+// {
+//     uint8_t payload[] = {
+//         // Head
+//         0xEF, 0x01,
+//         // Device Address
+//         0xFF, 0xFF, 0xFF, 0xFF,
+//         // Command Package
+//         0x01,
+//         // Package Length
+//         0x00, 0x05,
+//         // Command
+//         0x0E,
+//         // Register and Content
+//         addr, content,
+//         // Check sum
+//         0x00, 0x00,
+//     };
+//     CALC_CHECKSUM(payload);
+//     TransmitData(payload, sizeof(payload));
+//     uint16_t nread = polling_for_response();
+//     if (nread != 12)
+//         return 1;
+//     return finger_buffer[9];
+// }
 
 uint8_t finger::getImageAuth()
 {
