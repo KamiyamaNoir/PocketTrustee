@@ -77,9 +77,12 @@ void clickon_cds_ic(Window& wn, Display& dis, ui_operation& opt)
     dis.refresh_count = 11;
 }
 
+extern void idcard_dir_update();
+
 void clickon_cds_id(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
+    idcard_dir_update();
     dis.switchFocusLag(&wn_idcard_select);
     dis.refresh_count = 0;
 }

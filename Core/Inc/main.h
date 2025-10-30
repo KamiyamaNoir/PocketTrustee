@@ -99,6 +99,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 #define configEXPECTED_IDLE_TIME_BEFORE_SLEEP 1000
+// #define DEBUG_ENABLE
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

@@ -18,7 +18,6 @@ class DeviceFS:
         with open(path, 'rb') as f:
             raw_bytes = cbor2.loads(f.read())
             ins = cls(raw_bytes['key'])
-            ins.key = raw_bytes['key']
             plaintext = ins.aes.decrypt(raw_bytes['data'])
             data = cbor2.loads(plaintext)
             ins.passwords = data['passwords']
@@ -70,8 +69,6 @@ class DeviceFS:
         })
         
     def add_idcard(self, name: str, manchester: bytes):
-        if len(manchester) != 8:
-            raise ValueError("Wrong Mancheter code")
         if len(name) > 25:
             raise ValueError("Too long name")
         self.idcards.append({

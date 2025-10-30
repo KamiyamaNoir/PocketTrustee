@@ -35,7 +35,7 @@ void sys_startup()
 {
     rfid::set_drive_mode(rfid::STOP);
     LittleFS::init();
-
+#ifndef DEBUG_ENABLE
     cdc_acm_init();
     in_managermode = true;
     for (;;)
@@ -46,7 +46,7 @@ void sys_startup()
     }
     in_managermode = false;
     usbd_deinit();
-
+#endif
     // HAL_UARTEx_ReceiveToIdle_IT(&huart1, uart_buffer, sizeof(uart_buffer));
     fingerprint_uart_callback(0);
 }
@@ -93,12 +93,16 @@ void StartADCSample(void const* argument)
 
 void PreSleepProcessing(uint32_t ulExpectedIdleTime)
 {
+#ifndef DEBUG_ENABLE
     HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
+#endif
 }
 
 void PostSleepProcessing(uint32_t ulExpectedIdleTime)
 {
+#ifndef DEBUG_ENABLE
     SystemClockConfig(core::SCLK_FULLSPEED);
+#endif
     vTaskResume(ADCSampleTaskHandle);
 }
 

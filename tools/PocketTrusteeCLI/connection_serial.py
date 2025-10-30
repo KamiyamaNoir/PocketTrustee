@@ -113,7 +113,8 @@ class Connection:
             "req": "initialize",
             "user": f"{socket.gethostname()[:24]}",
             "device": device_name,
-            "pin": device_pin
+            "pin": device_pin,
+            "timestamp": int(time())
         }))
         # polling for data
         nread = self.wait_data(timeout=2000)
@@ -145,7 +146,7 @@ class Connection:
             raise TimeoutError("设备未响应")
         return nread.decode(encoding='ascii')
     
-    def send_totp_add(self, name: str, key: bytes):
+    def send_totp_add(self, name: str, key: bytes, step: int, code_len: int):
         self.clear_buffer()
         # check name
         if len(name) > 24:
@@ -155,8 +156,8 @@ class Connection:
             raise Exception("Unrecognized key")
         fbytes = cbor2.dumps([
             key,
-            30,
-            6
+            step,
+            code_len
         ])
         enbytes = self.aes.encrypt(self.aes_pad(fbytes))
         # send file
@@ -413,6 +414,7 @@ class Connection:
             raise TimeoutError("设备未响应 - Request")
         if nread != b'ok':
             raise SystemError(f"设备错误,{nread.hex()}")
+        self.send_data(b'ok')
         # read data
         while True:
             # polling for response

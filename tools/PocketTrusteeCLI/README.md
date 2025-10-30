@@ -48,6 +48,17 @@
 - `idcard list`  
 列出当前所有id卡
 
+### `backup`
+同步数据（备份数据）  
+密码，TOTP，ID卡数据会被同步到devices目录下对应设备名称的pkt文件内，**请注意pkt文件内原来的数据将会被覆盖**  
+pkt文件内的密码数据将以明文保存，请注意**像保护ssh私钥一样保护你的pkt文件**  
+随时备份你的pkt文件，**pkt文件也将用于还原数据**
+
+### `recover [-h] PATH`
+还原数据
+- PATH : 要还原的数据源pkt文件路径  
+目前仅还原密码，TOTP和ID卡
+
 ## SuperDebug命令表
 如果你不知道SuperDebug是干什么用的，说明你不需要用SuperDebug  
 这部分我将写得很简单，相信各位需要su的dever们可以看懂

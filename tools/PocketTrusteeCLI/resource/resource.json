@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "directory": [
         "gui_fg",
         "gui_idcard",
@@ -32,7 +32,6 @@
         "gui_pwd/saved": "saved.bin",
         "gui_trans/trans": "transparent_mode.bin",
         "gui_manage/host": "host.bin",
-        "gui_manage/trust": "trust.bin",
         "gui_manage/respond": "responding.bin",
         "texture/iccard": "texture_card.bin",
         "namecards/demo.ncard": "namecard.bin",

@@ -91,12 +91,9 @@ void clickon_about(Window& wn, Display& dis, ui_operation& opt)
     dis.refresh_count = 0;
 }
 
-extern void idcard_dir_update();
-
 void clickon_menup1_idcard(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    idcard_dir_update();
     dis.switchFocusLag(&wn_idcard);
     dis.refresh_count = 0;
 }

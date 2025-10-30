@@ -193,7 +193,7 @@ void clickon_pwdgen_save(Window& wn, Display& dis, ui_operation& opt)
     ZCBOR_STATE_E(state, 2, payload, sizeof(payload), 1);
     zcbor_list_start_encode(state, 2);
     zcbor_tstr_put_lit(state, "Unknown");
-    zcbor_tstr_put_lit(state, pwdgen_pwd);
+    zcbor_tstr_encode_ptr(state, pwdgen_pwd, strlen(pwdgen_pwd));
     zcbor_list_end_encode(state, 2);
     memcpy(pwdgen_pwd, name, strlen(name) + 1);
     strcat(name, ".pwd");

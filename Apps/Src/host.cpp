@@ -17,11 +17,9 @@ extern StaticRingBuffer cdc_receive_ring_buffer;
 extern void cdc_acm_data_send(const uint8_t* data, uint8_t len, uint16_t timeout);
 // GUI Handler
 extern gui::Display gui_main;
-extern gui::Window wn_manager_msgbox;
 extern gui::Window wn_manager_mode;
 extern gui::Window wn_manager_respond;
 extern void clickon_manager_exit(gui::Window& wn, gui::Display& dis, gui::ui_operation& opt);
-extern volatile char gui_manager_msgbox_clicked;
 
 extern osThreadId defaultTaskHandle;
 
@@ -50,7 +48,11 @@ __attribute__((section("._user_graphic_ram"))) static uint8_t payload_buffer[HOS
 volatile bool in_managermode = false;
 char connect_user[24] {};
 char manager_user[24] {};
+#ifdef DEBUG_ENABLE
+char device_name[24] = "debug_xx_device";
+#else
 char device_name[24] = "PocketTrustee";
+#endif
 
 // Local function
 static uint16_t polling_for_data(uint8_t* dst, uint16_t size, uint16_t timeout);
@@ -105,7 +107,6 @@ uint8_t hostCommandInvoke(bool from_startup)
     if (IS_COMMAND(require_desc, "initialize") && from_startup)
     {
         // Format all data
-        MX_AES_Init();
         int err = LittleFS::fs_format();
         if (err < 0)
         {
@@ -135,6 +136,14 @@ uint8_t hostCommandInvoke(bool from_startup)
         zcbor_tstr_decode(zcbor_state, &usr_str);
         ZCBOR_TO_CSTRING(usr_str, pin);
         PIN_CODE::setPinCode(pin);
+        // Calibrate RTC
+        zcbor_tstr_expect_ptr(zcbor_state, "timestamp", 9);
+        uint32_t timestamp;
+        zcbor_uint32_decode(zcbor_state, &timestamp);
+        //NOLINTNEXTLINE
+        rtc::TimeDate dt;
+        rtc::UnixToTimedate(timestamp, &dt, TIME_ZONE_OFFSET_Shanghai);
+        rtc::setTimedate(&dt);
         // send key
         send(key, 16);
         return 1;
@@ -303,33 +312,6 @@ bool command_connect_req()
         return false;
     if (memcmp(expected, response.value, 16) != 0)
         return false;
-    // Success here, require a confirmation from user
-    gui_main.switchFocusLag(&wn_manager_msgbox);
-    // gui_main.process(gui::OP_NULL);
-    GUI_OP_NULL();
-    gui_manager_msgbox_clicked = 0;
-    while (!gui_manager_msgbox_clicked)
-    {
-        uint8_t temperary[3];
-        send("wait", 4);
-        nread = polling_for_data(temperary, 3, 1000);
-        if (nread == 0 || memcmp(temperary, "ok", 2) != 0)
-        {
-            // something wrong here
-            gui_main.switchFocusLag(&wn_manager_mode);
-            gui_main.refresh_count = 0;
-            // gui_main.process(gui::OP_NULL);
-            GUI_OP_NULL();
-            goto refuse;
-        }
-    }
-    if (gui_manager_msgbox_clicked != 2)
-    {
-        // refuse to connect
-        refuse:
-        manager_user[0] = '\0';
-        return true;
-    }
     // Send back success message
     zcbor_new_encode_state(encode_state, 4, payload_buffer, HOST_CACHE_SIZE, 1);
     zcbor_map_start_encode(encode_state, 4);
@@ -352,6 +334,10 @@ bool command_connect_req()
     rtc::TimeDate dt {};
     rtc::UnixToTimedate(timestamp, &dt, TIME_ZONE_OFFSET_Shanghai);
     rtc::setTimedate(&dt);
+    // Display Status
+    gui_main.switchFocusLag(&wn_manager_respond);
+    gui_main.refresh_count = 11;
+    GUI_OP_NULL();
     return true;
 }
 
@@ -424,10 +410,12 @@ bool invoke_fsread(zcbor_state_t* zcbor_state)
     auto file = LittleFS::fs_file_handler(path, LFS_O_RDONLY, &err);
     if (err != LFS_ERR_OK)
     {
-        send(err, 1);
+        send("error", 5);
         return false;
     }
     send("ok", 2);
+    // Synchronize
+    polling_for_data(receive_buffer, HOST_CACHE_SIZE, 1000);
     // File transmit begin
     for (;;)
     {

@@ -70,11 +70,11 @@ class PocketTrusteeCLI(Cmd):
             if ans.upper() != 'Y':
                 return
             reset_resp = self.connection.send_reset()
-            if (reset_resp != b'ok'):
+            if reset_resp != b'ok':
                 console.print("设备已重启,请重新连接", style='blue')
                 return
             console.print("输入你期望的设备名称,不超过25个字符,留空默认")
-            device_name = 'PocketTrsutee'
+            device_name = 'PocketTrustee'
             while True:
                 ans = input()
                 if len(ans) > 25:
@@ -99,7 +99,9 @@ class PocketTrusteeCLI(Cmd):
             device_fs.save_as_file(f'devices/{device_name}.pkt')
             self.invoke_init()
             return
-        key_map = {}
+        key_map = {
+            'debug_xx_device': b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        }
         for dirpath, _, filenames in os.walk('./devices'):
             for file in filenames:
                 if file[-4:] != '.pkt':
@@ -126,22 +128,64 @@ class PocketTrusteeCLI(Cmd):
             if file_name[-4:] != '.pwd':
                 continue
             fbytes = self.connection.send_su_file_read(f'passwords/{file_name}')
-            fb_encrypto = self.connection.aes.decrypt(fbytes)
-            flist = cbor2.loads(fb_encrypto)
+            fb_decrypto = self.connection.aes.decrypt(fbytes)
+            flist = cbor2.loads(fb_decrypto)
             dfs.add_password(file_name[:-4], flist[0], flist[1])
             console.print(f'Backup: {file_name}')
         # Load totp
-        dfs.passwords.clear()
+        dfs.totp.clear()
         file_ls = self.connection.send_su_file_ls('otp/').split('\n')
         for file_name in file_ls:
             if file_name[-5:] != '.totp':
                 continue
             fbytes = self.connection.send_su_file_read(f'otp/{file_name}')
-            fb_encrypto = self.connection.aes.decrypt(fbytes)
-            flist = cbor2.loads(fb_encrypto)
+            fb_decrypto = self.connection.aes.decrypt(fbytes)
+            flist = cbor2.loads(fb_decrypto)
             dfs.add_totp(file_name[:-5], flist[0], flist[1], flist[2])
             console.print(f'Backup: {file_name}')
-        
+        # Load ID Card
+        dfs.idcards.clear()
+        file_ls = self.connection.send_su_file_ls('idcards/').split('\n')
+        for file_name in file_ls:
+            if file_name[-5:] != '.card':
+                continue
+            fbytes = self.connection.send_su_file_read(f'idcards/{file_name}')
+            # id卡并没有被加密,也没有format
+            # fb_decrypto = self.connection.aes.decrypt(fbytes)
+            # flist = cbor2.loads(fb_decrypto)
+            dfs.add_idcard(file_name[:-5], fbytes)
+            console.print(f'Backup: {file_name}')
+        dfs.save_as_file(f'./devices/{self.connection.device_name}.pkt')
+        console.print('备份完成', style='bold green')
+            
+    def invoke_recover(self, doc_path):
+        dfs = DeviceFS.load_from_file(doc_path)
+        # Recover passwords
+        for file in dfs.passwords:
+            console.print(f'Recover: {file['name']}')
+            try:
+                self.connection.send_pwd_add(file['name'], file['password'], file['account'])
+            except Exception as e:
+                console.print(e)
+        # Recover TOTP
+        for file in dfs.totp:
+            console.print(f'Recover: {file['name']}')
+            try:
+                self.connection.send_totp_add(file['name'], file['key'], file['step'], file['num'])
+            except Exception as e:
+                console.print(f'Exception: {e}')
+        # Recover ID Card
+        for file in dfs.idcards:
+            console.print(f'Recover: {file['name']}')
+            try:
+                file_ls = self.connection.send_su_file_ls('idcards/').split('\n')
+                if f'{file['name']}.card' in file_ls:
+                    continue
+                self.connection.send_su_file_write(f'idcards/{file['name']}.card', file['code'])
+            except Exception as e:
+                console.print(e)
+        console.print('还原完成', style='bold green')
+
     def invoke_init(self):
         finfo = open('./resource/resource.json', 'r', encoding='utf-8')
         finfo = json.loads(finfo.read())
@@ -181,6 +225,17 @@ class PocketTrusteeCLI(Cmd):
             self.invoke_backup()
         except Exception as e:
             self.poutput(e)
+
+    # ====== Device Recover ======
+    device_recover_parser = Cmd2ArgumentParser()
+    device_recover_parser.add_argument('path', type=str, help='还原文件路径(pkt文件)')
+
+    @with_argparser(device_recover_parser)
+    def do_recover(self, args):
+        try:
+            self.invoke_recover(args.path)
+        except Exception as e:
+            self.poutput(e)
             
     # ====== TOTP Function ======
     totp_parser = Cmd2ArgumentParser()
@@ -208,7 +263,7 @@ class PocketTrusteeCLI(Cmd):
             else:
                 raise SystemError("非法格式")
             try:
-                self.connection.send_totp_add(args.name[0], key)
+                self.connection.send_totp_add(args.name[0], key, 30, 6)
             except Exception as e:
                 self.poutput(e)
         elif args.subcmd == 'delete':
