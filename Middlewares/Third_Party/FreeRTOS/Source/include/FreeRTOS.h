@@ -751,7 +751,7 @@ hold explicit before calling the code. */
 #endif
 
 #ifndef configEXPECTED_IDLE_TIME_BEFORE_SLEEP
-	#define configEXPECTED_IDLE_TIME_BEFORE_SLEEP 2
+	#define configEXPECTED_IDLE_TIME_BEFORE_SLEEP 1000
 #endif
 
 #if configEXPECTED_IDLE_TIME_BEFORE_SLEEP < 2

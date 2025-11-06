@@ -114,6 +114,7 @@ class PocketTrusteeCLI(Cmd):
             self.device_name = resp
             self.prompt = f'({resp})>'
             console.print(f"成功连接到:{self.connection.ser.port}", style='bold green')
+            self.invoke_backup()
         except Exception as e:
             conn.ser.close()
             console.print(f"连接请求被拒绝,{e}", style='bold red')

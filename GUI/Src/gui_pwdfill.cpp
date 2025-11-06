@@ -1,11 +1,9 @@
 #include "gui.h"
 #include "gui_resource.h"
-#include "lfs.h"
 #include "lfs_base.h"
 #include <cstdio>
-#include "zcbor_decode.h"
-#include "aes.h"
 #include "fingerprint.h"
+#include "password.h"
 
 #define GUI_PWDLIST_CTRNUM 7
 #define GUI_PWDFILL_FAIL_CTRNUM 1
@@ -24,12 +22,11 @@ struct PWD_DataStruct
     char path[42];
 };
 
-constexpr char pwd_dir_path[] = "passwords";
 static uint16_t pwd_item_count = 0;
-static volatile uint16_t item_ptr = 0;
-static uint32_t pwd_dir_index_map[PWD_LIST_PAGE_MAX * PWD_LIST_PAGE_SIZE];
+static int on_select_pwd_index = -1;
+static char pwd_file_name_map[PWD_LIST_PAGE_SIZE * PWD_LIST_PAGE_MAX][PasswordFile::PWD_NAME_MAX];
+static PasswordFile current_pwd;
 static volatile bool in_select_mode = false;
-static PWD_DataStruct currentPWD {};
 
 extern Window wn_cds;
 extern void render_rectangle(Scheme& sche, Control& self, bool onSelect);
@@ -39,8 +36,8 @@ extern void usbd_deinit();
 void pwd_dir_update();
 
 void clickon_pwd_exit(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwd_up(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwd_down(Window& wn, Display& dis, ui_operation& opt);
+void clickon_pwd_pageup(Window& wn, Display& dis, ui_operation& opt);
+void clickon_pwd_pagedown(Window& wn, Display& dis, ui_operation& opt);
 void clickon_pwd_list(Window& wn, Display& dis, ui_operation& opt);
 void clickon_pwd_account(Window& wn, Display& dis, ui_operation& opt);
 void clickon_pwd_key(Window& wn, Display& dis, ui_operation& opt);
@@ -73,9 +70,9 @@ Control controls_pwd_list[GUI_PWDLIST_CTRNUM]
     {229, 1, 64, 24, true, clickon_pwd_exit, render_pwd_list},
     // Select box
     {3, 4, 203, 120, true, clickon_pwd_list, render_pwd_select},
-    // Up and Down
-    {217, 29, 18, 18, true, clickon_pwd_up, render_rectangle},
-    {217, 66, 18, 18, true, clickon_pwd_down, render_rectangle},
+    // Page Up and Down
+    {217, 29, 18, 18, true, clickon_pwd_pageup, render_rectangle},
+    {217, 66, 18, 18, true, clickon_pwd_pagedown, render_rectangle},
     // Key
     {246, 69, 47, 18, true, clickon_pwd_key, render_rectangle},
     // Account
@@ -91,65 +88,36 @@ Control controls_pwd_fail[GUI_PWDFILL_FAIL_CTRNUM]
 Window wn_pwd_list(&res_pwd_list, controls_pwd_list, GUI_PWDLIST_CTRNUM);
 Window wn_pwd_fail(&res_pwdfill_fail, controls_pwd_fail, GUI_PWDFILL_FAIL_CTRNUM);
 
-static void load_current_pwd()
-{
-    if (item_ptr >= pwd_item_count)
-    {
-        currentPWD.account[0] = '\0';
-        currentPWD.password[0] = '\0';
-        return;
-    }
-    uint8_t raw_data[160];
-    uint8_t payload[sizeof(raw_data)];
-    auto dir = LittleFS::fs_dir_handler(pwd_dir_path);
-    dir.seek(pwd_dir_index_map[item_ptr]);
-    lfs_info info;
-    dir.next(&info);
-    char path[42] = "passwords/";
-    strcat(path, info.name);
-    zcbor_string str;
-    auto fs = LittleFS::fs_file_handler(path);
-    uint16_t nread = fs.read(raw_data, sizeof(raw_data));
-    HAL_CRYP_AESECB_Decrypt(&hcryp, raw_data, nread, payload, 1000);
-    ZCBOR_STATE_D(state, 2, payload, sizeof(payload), 1, 0);
-    zcbor_list_start_decode(state);
-
-    zcbor_tstr_decode(state, &str);
-    memcpy(currentPWD.account, str.value, str.len);
-    currentPWD.account[str.len] = '\0';
-
-    zcbor_tstr_decode(state, &str);
-    memcpy(currentPWD.password, str.value, str.len);
-    currentPWD.password[str.len] = '\0';
-
-    memcpy(currentPWD.path, path, strlen(path) + 1);
-}
-
-/**
- * Load and update password data from flash
- */
 void pwd_dir_update()
 {
-    auto fs_pwd_dir = LittleFS::fs_dir_handler(pwd_dir_path);
+    auto fs_pwd_dir = LittleFS::fs_dir_handler(PasswordFile::pwd_dir);
     int dir_count = fs_pwd_dir.count();
     if (dir_count < 0) return;
     pwd_item_count = 0;
     fs_pwd_dir.rewind();
     for (int i = 0; i < dir_count; i++)
     {
-        lfs_info info {};
-        uint32_t pos = fs_pwd_dir.tell();
+        //NOLINTNEXTLINE
+        lfs_info info;
         fs_pwd_dir.next(&info);
         if (info.type == LFS_TYPE_DIR) continue;
         uint32_t len = strlen(info.name);
-        if (len < 4) continue;
-        if (memcmp(info.name + len - 4, ".pwd", 4) != 0)
+        if (len < sizeof(PasswordFile::pwd_suffix)) continue;
+        if (memcmp(info.name + len - sizeof(PasswordFile::pwd_suffix) + 1, PasswordFile::pwd_suffix, sizeof(PasswordFile::pwd_suffix) - 1) != 0)
             continue;
-        pwd_dir_index_map[pwd_item_count] = pos;
+        char name[PasswordFile::PWD_NAME_MAX];
+        strcpy(name, info.name);
+        name[len - sizeof(PasswordFile::pwd_suffix) + 1] = '\0';
+        strcpy(pwd_file_name_map[pwd_item_count], name);
         pwd_item_count++;
     }
-    item_ptr = 0;
-    load_current_pwd();
+    if (pwd_item_count != 0)
+    {
+        on_select_pwd_index = 0;
+        current_pwd.load(pwd_file_name_map[0]);
+    }
+    else
+        on_select_pwd_index = -1;
 }
 
 void clickon_pwd_exit(Window& wn, Display& dis, ui_operation& opt)
@@ -160,19 +128,24 @@ void clickon_pwd_exit(Window& wn, Display& dis, ui_operation& opt)
     dis.refresh_count = 0;
 }
 
-void clickon_pwd_up(Window& wn, Display& dis, ui_operation& opt)
+void clickon_pwd_pageup(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    if (item_ptr < PWD_LIST_PAGE_SIZE) return;
-    item_ptr = ((item_ptr - PWD_LIST_PAGE_SIZE) / PWD_LIST_PAGE_SIZE) * PWD_LIST_PAGE_SIZE;
+    on_select_pwd_index -= PWD_LIST_PAGE_SIZE;
+    if (on_select_pwd_index < 0)
+    {
+        on_select_pwd_index = 0;
+    }
 }
 
-void clickon_pwd_down(Window& wn, Display& dis, ui_operation& opt)
+void clickon_pwd_pagedown(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    uint16_t start = (item_ptr / PWD_LIST_PAGE_SIZE) * PWD_LIST_PAGE_SIZE;
-    if (pwd_item_count - start <= PWD_LIST_PAGE_SIZE) return;
-    item_ptr = ((item_ptr + PWD_LIST_PAGE_SIZE) / PWD_LIST_PAGE_SIZE) * PWD_LIST_PAGE_SIZE;
+    on_select_pwd_index += PWD_LIST_PAGE_SIZE;
+    if (on_select_pwd_index > pwd_item_count-1 || on_select_pwd_index < 0)
+    {
+        on_select_pwd_index = pwd_item_count-1;
+    }
 }
 
 void clickon_pwd_list(Window& wn, Display& dis, ui_operation& opt)
@@ -184,26 +157,17 @@ void clickon_pwd_list(Window& wn, Display& dis, ui_operation& opt)
         if (!in_select_mode)
         {
             // On exit select mode
-            load_current_pwd();
+            current_pwd.load(pwd_file_name_map[on_select_pwd_index]);
         }
         return;
     }
     if (in_select_mode)
     {
-        uint16_t start = (item_ptr / PWD_LIST_PAGE_SIZE) * PWD_LIST_PAGE_SIZE;
-        uint16_t end = pwd_item_count - start > PWD_LIST_PAGE_SIZE ? start + PWD_LIST_PAGE_SIZE : pwd_item_count - 1;
-        if (item_ptr == 0 && opt == OP_UP)
-        {
-            item_ptr = end;
-        }
-        else
-        {
-            item_ptr += opt;
-            if (item_ptr > end)
-                item_ptr = start;
-            if (item_ptr < start)
-                item_ptr = end;
-        }
+        on_select_pwd_index += opt;
+        if (on_select_pwd_index < 0)
+            on_select_pwd_index = 0;
+        if (on_select_pwd_index > pwd_item_count-1)
+            on_select_pwd_index = pwd_item_count-1;
         opt = OP_NULL;
     }
 }
@@ -219,7 +183,7 @@ static void result_callback(FingerprintResult result, FingerprintRequest* self)
 {
     if (result == FG_PASS)
     {
-        hid_keyboard_string(currentPWD.password);
+        hid_keyboard_string(current_pwd.pwd);
     }
 }
 
@@ -228,7 +192,7 @@ static FingerprintRequest fg_req;
 void clickon_pwd_account(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    hid_keyboard_string(currentPWD.account);
+    hid_keyboard_string(current_pwd.account);
 }
 
 void clickon_pwd_key(Window& wn, Display& dis, ui_operation& opt)
@@ -245,14 +209,13 @@ void clickon_pwd_key(Window& wn, Display& dis, ui_operation& opt)
 void clickon_pwd_delete(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    LittleFS::fs_remove(currentPWD.path);
+    current_pwd.remove();
     pwd_dir_update();
 }
 
 void render_pwd_list(Scheme& sche, Control& self, bool onSelect)
 {
     sche.clear();
-    auto fs_pwd_dir = LittleFS::fs_dir_handler(pwd_dir_path);
     // Display Icon
     sche.texture(icon_bk_menu, self.x, self.y, self.w, self.h)
         .texture(icon_down, 218, 67, 16, 16)
@@ -261,26 +224,22 @@ void render_pwd_list(Scheme& sche, Control& self, bool onSelect)
     // Display Page
     sche.put_string(211, 93, ASCII_1608, "Page");
     uint8_t page = (pwd_item_count-1) / PWD_LIST_PAGE_SIZE + 1;
-    uint8_t index = item_ptr / PWD_LIST_PAGE_SIZE + 1;
+    uint8_t index = on_select_pwd_index / PWD_LIST_PAGE_SIZE + 1;
     char text[10];
     sprintf(text, "%d/%d", index, page);
     sche.put_string(211, 109, ASCII_1608, text);
     // Display items
-    for (uint8_t i = 0; i < PWD_LIST_PAGE_SIZE; i++)
+    if (pwd_item_count != 0 && on_select_pwd_index >= 0)
     {
-        lfs_info info;
-        uint32_t pos = i + (index-1)*PWD_LIST_PAGE_SIZE;
-        if (pos >= pwd_item_count) break;
-        fs_pwd_dir.seek(pwd_dir_index_map[pos]);
-        fs_pwd_dir.next(&info);
-        char name[64];
-        uint8_t name_size = strlen(info.name) - 4;
-        memcpy(name, info.name, name_size);
-        name[name_size] = '\0';
-        sche.put_string(4, 5 + 20*i, ASCII_1608, name);
-        if (pos == item_ptr)
+        uint8_t start = (on_select_pwd_index / PWD_LIST_PAGE_SIZE) * PWD_LIST_PAGE_SIZE;
+        uint8_t end = start + PWD_LIST_PAGE_SIZE > pwd_item_count-1 ? pwd_item_count : (start + PWD_LIST_PAGE_SIZE);
+        for (uint8_t i = start; i < end; i++)
         {
-            sche.rectangle(3, 5+20*i, 201, 17, 1);
+            sche.put_string(4, 5 + 20*(i % PWD_LIST_PAGE_SIZE), ASCII_1608, pwd_file_name_map[i]);
+            if (i == on_select_pwd_index)
+            {
+                sche.rectangle(3, 5+20*(i % PWD_LIST_PAGE_SIZE), 201, 17, 1);
+            }
         }
     }
     if (onSelect)

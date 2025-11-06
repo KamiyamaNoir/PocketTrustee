@@ -4,3 +4,4 @@ pyserial
 pillow
 cbor2
 pycryptodome
+qrcode[pil]

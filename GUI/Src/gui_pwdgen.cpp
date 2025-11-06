@@ -5,7 +5,7 @@
 #include "bsp_rtc.h"
 #include "zcbor_encode.h"
 #include "lfs_base.h"
-#include "aes.h"
+#include "password.h"
 
 #define GUI_PWDGEN_CTRNUM 9
 #define GUI_PWDGEN_SAVED_CTRNUM 1
@@ -15,7 +15,6 @@ using namespace gui;
 extern Window wn_cds;
 extern void hid_keyboard_string(const char* str);
 extern void usbd_deinit();
-extern void pwd_dir_update();
 
 void clickon_pwdgen_keylength(Window& wn, Display& dis, ui_operation& opt);
 void clickon_pwdgen_gen(Window& wn, Display& dis, ui_operation& opt);
@@ -174,7 +173,6 @@ void clickon_pwdgen_exit(Window& wn, Display& dis, ui_operation& opt)
 void clickon_pwdgen_saved_ok(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    pwd_dir_update();
     pwdgen_pwd[0] = '\0';
     dis.switchFocusLag(&wn_pwdgen);
     dis.refresh_count = 0;
@@ -184,24 +182,19 @@ void clickon_pwdgen_save(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
     if (pwdgen_pwd[0] == '\0') return;
+    //NOLINTNEXTLINE
     rtc::TimeDate td;
     rtc::getTimedate(&td);
     char name[26];
-    uint8_t payload[160];
-    uint8_t encrypto_payload[sizeof(payload)];
     sprintf(name, "%d-%d-%d %d-%d-%d", td.year, td.month, td.day, td.hour, td.minute, td.second);
-    ZCBOR_STATE_E(state, 2, payload, sizeof(payload), 1);
-    zcbor_list_start_encode(state, 2);
-    zcbor_tstr_put_lit(state, "Unknown");
-    zcbor_tstr_encode_ptr(state, pwdgen_pwd, strlen(pwdgen_pwd));
-    zcbor_list_end_encode(state, 2);
-    memcpy(pwdgen_pwd, name, strlen(name) + 1);
-    strcat(name, ".pwd");
-    char path[42] = "passwords/";
-    strcat(path, name);
-    auto fs = LittleFS::fs_file_handler(path);
-    HAL_CRYP_AESECB_Encrypt(&hcryp, payload, state->payload - payload, encrypto_payload, 1000);
-    fs.write(encrypto_payload, sizeof(encrypto_payload));
+
+    auto pwd_handler = PasswordFile();
+    strcpy(pwd_handler.name, name);
+    strcpy(pwd_handler.account, "Default");
+    strcpy(pwd_handler.pwd, pwdgen_pwd);
+    pwd_handler.save();
+    strcpy(pwdgen_pwd, name);
+    //TODO: What about unsuccessfully saved?
     dis.switchFocusLag(&wn_pwdgen_saved);
     dis.refresh_count = 11;
 }

@@ -136,7 +136,7 @@ void MX_FREERTOS_Init(void) {
   manager_taskHandle = osThreadCreate(osThread(manager_task), NULL);
 
   /* definition and creation of IdealTask */
-  osThreadStaticDef(IdealTask, StartIdealTask, osPriorityIdle, 0, 128, IdealTaskBuffer, &IdealTaskControlBlock);
+  osThreadStaticDef(IdealTask, StartIdealTask, osPriorityLow, 0, 128, IdealTaskBuffer, &IdealTaskControlBlock);
   IdealTaskHandle = osThreadCreate(osThread(IdealTask), NULL);
 
   /* definition and creation of ADCSampleTask */
