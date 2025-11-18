@@ -13,12 +13,13 @@ name{}, key{}
 {
     uint8_t cache[TOTP_FILE_SIZE];
     uint8_t plaintext[TOTP_FILE_SIZE];
-    char path[40] = "otp/";
+    char path[TOTP_NAME_MAX + sizeof(totp_dir_base) + sizeof(totp_suffix)];
 
+    path[0] = '\0';
+    strcat(path, totp_dir_base);
     strcpy(this->name, totp_name);
-
     strcat(path, totp_name);
-    strcat(path, ".totp");
+    strcat(path, totp_suffix);
 
     auto fs = LittleFS::fs_file_handler(path);
     int err = fs.read(cache, sizeof(cache));

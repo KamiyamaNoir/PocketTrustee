@@ -7,6 +7,7 @@ import cbor2
 from Crypto.Cipher import AES
 from rich.progress import Progress
 from rich_console import console
+from img_generator import WIFICard, NameCard
 
 
 class Connection:
@@ -280,6 +281,64 @@ class Connection:
             if item[-5:] != '.card':
                 continue
             console.print(item[:-5])
+            
+    def send_wifi_add(self, ssid: str, pwd: str):
+        Tpath = f'wifi/{ssid}.wifi'
+        wifi_dir = self.send_su_file_ls('wifi/')
+        wifi_dir = wifi_dir.split('\n')
+        wifi_dir.remove('./')
+        wifi_dir.remove('../')
+        if f'{ssid}.wifi' in wifi_dir:
+            raise ValueError("该WIFI已经存在,请先删除")
+        wifi_card = WIFICard()
+        wifi_card.make(ssid, pwd)
+        data = wifi_card.binary()
+        self.send_su_file_write(Tpath, data)
+    
+    def send_wifi_delete(self, ssid: str):
+        Tpath = f'wifi/{ssid}.wifi'
+        self.send_su_file_rm(Tpath)
+        
+    def send_wifi_list(self):
+        wifi_dir = self.send_su_file_ls('wifi/')
+        wifi_dir = wifi_dir.split('\n')
+        wifi_dir.remove('./')
+        wifi_dir.remove('../')
+        for item in wifi_dir:
+            if len(item) == 0:
+                continue
+            if item[-5:] != '.wifi':
+                continue
+            console.print(item[:-5])
+            
+    def send_namecard_add(self, name: str, **kargs):
+        Tpath = f'namecard/{name}.ncard'
+        card_dir = self.send_su_file_ls('namecard/')
+        card_dir = card_dir.split('\n')
+        card_dir.remove('./')
+        card_dir.remove('../')
+        if f'{name}.ncard' in card_dir:
+            raise ValueError("该名片已经存在,请先删除")
+        name_card = NameCard()
+        name_card.make(name, **kargs)
+        data = name_card.binary()
+        self.send_su_file_write(Tpath, data)
+    
+    def send_namecard_delete(self, name: str):
+        Tpath = f'namecard/{name}.ncard'
+        self.send_su_file_rm(Tpath)
+        
+    def send_namecard_list(self):
+        card_dir = self.send_su_file_ls('namecard/')
+        card_dir = card_dir.split('\n')
+        card_dir.remove('./')
+        card_dir.remove('../')
+        for item in card_dir:
+            if len(item) == 0:
+                continue
+            if item[-6:] != '.ncard':
+                continue
+            console.print(item[:-6])
 
     def send_su_file_ls(self, path: str):
         self.clear_buffer()

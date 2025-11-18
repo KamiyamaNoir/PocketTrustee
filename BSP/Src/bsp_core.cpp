@@ -114,9 +114,9 @@ void SystemClockConfig(core::SYSTEM_CLK clk)
     __disable_irq();
     // Cut off periphery
     usbd_deinit();
-    // HAL_UART_DeInit(&hlpuart1);
-    // HAL_UART_DeInit(&huart1);
-    // HAL_UART_DeInit(&huart3);
+    HAL_UART_DeInit(&hlpuart1);
+    HAL_UART_DeInit(&huart1);
+    HAL_UART_DeInit(&huart3);
 
     // Switch to MSI before reconfiguration
     HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);

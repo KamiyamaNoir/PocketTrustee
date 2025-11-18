@@ -3,6 +3,7 @@
 #include "otp.h"
 #include <cstring>
 #include "lfs_base.h"
+#include "gui_component_list.h"
 
 #define GUI_TOTP_SEL_CTRNUM 2
 #define GUI_TOTP_CTRNUM 1
@@ -50,74 +51,11 @@ ResourceDescriptor res_totp
 Window wn_totp_sel(&res_totp_sel, controls_totp_sel, GUI_TOTP_SEL_CTRNUM);
 Window wn_totp(&res_totp, controls_totp, GUI_TOTP_CTRNUM);
 
-constexpr char totp_basepath[] = "otp/";
-static int onselect_file_index = -1;
-static uint8_t totp_file_count = 0;
-static uint32_t totp_file_index_map[TOTP_SEL_PAGE_SIZE * TOTP_SEL_PAGE_MAX];
-static char totp_file_name_map[TOTP_SEL_PAGE_SIZE][OTP_TOTP::TOTP_NAME_MAX];
-
-
-void totp_name_map_update()
-{
-    uint8_t page_start;
-    if (totp_file_count == 0)
-        return;
-    if (onselect_file_index < 0)
-        page_start = 0;
-    else
-        page_start = (onselect_file_index / TOTP_SEL_PAGE_SIZE) * TOTP_SEL_PAGE_SIZE;
-    uint8_t page_end = page_start + TOTP_SEL_PAGE_SIZE;
-    if (page_end > totp_file_count - 1)
-    {
-        page_end = totp_file_count - 1;
-    }
-    auto dir = LittleFS::fs_dir_handler(totp_basepath);
-    for (uint8_t i = 0; i < TOTP_SEL_PAGE_SIZE; i++)
-    {
-        if (page_start + i > page_end)
-        {
-            totp_file_name_map[i][0] = '\0';
-            continue;
-        }
-
-        //NOLINTNEXTLINE
-        lfs_info info;
-        dir.seek(totp_file_index_map[page_start]);
-        dir.next(&info);
-
-        uint8_t len = strlen(info.name) - 5;
-        memcpy(totp_file_name_map[i], info.name, len);
-        totp_file_name_map[i][len] = '\0';
-
-        page_start++;
-    }
-}
+ComponentList<TOTP_SEL_PAGE_SIZE, OTP_TOTP::TOTP_NAME_MAX> totp_list(OTP_TOTP::totp_dir_base, OTP_TOTP::totp_suffix);
 
 void totp_dir_update()
 {
-    totp_file_count = 0;
-    onselect_file_index = -1;
-    auto dir = LittleFS::fs_dir_handler(totp_basepath);
-    int dir_count = dir.count();
-    if (dir_count < 0) return;
-    dir.rewind();
-
-    for (int i = 0; i < dir_count; i++)
-    {
-        //NOLINTNEXTLINE
-        lfs_info info;
-        uint32_t pos = dir.tell();
-        dir.next(&info);
-        if (info.type == LFS_TYPE_DIR) continue;
-        uint32_t len = strlen(info.name);
-        if (len < 5) continue;
-        if (memcmp(info.name + len - 5, ".totp", 5) != 0)
-            continue;
-        totp_file_index_map[totp_file_count] = pos;
-        totp_file_count++;
-    }
-
-    totp_name_map_update();
+    totp_list.update();
 }
 
 void clickon_totp_sel_exit(Window& wn, Display& dis, ui_operation& opt)
@@ -135,19 +73,15 @@ void clickon_totp_sel(Window& wn, Display& dis, ui_operation& opt)
         dis.refresh_count = 0;
         return;
     }
-    if (totp_file_count == 0) return;
-    if (opt == OP_UP && onselect_file_index == 0)
+    if (!(opt == OP_UP && totp_list.on_select() == 0) && !(opt == OP_DOWN && totp_list.on_select() == totp_list.item_count()-1))
     {
-        onselect_file_index = -1;
-        return;
+        totp_list.move(opt);
+        opt = OP_NULL;
     }
-    if (opt == OP_DOWN && onselect_file_index == totp_file_count-1)
+    else
     {
-        onselect_file_index = -1;
-        return;
+        totp_list.set_index(0);
     }
-    onselect_file_index += opt;
-    opt = OP_NULL;
 }
 
 void clickon_totp_exit(Window& wn, Display& dis, ui_operation& opt)
@@ -166,18 +100,11 @@ void render_totp_sel(Scheme& sche, Control& self, bool onSelect)
     {
         sche.rectangle(self.x, self.y, self.w, self.h, 2);
     }
-    else if (onselect_file_index < 0)
-    {
-        onselect_file_index = 0;
-    }
     // Display item
     for (uint8_t i = 0; i < TOTP_SEL_PAGE_SIZE; i++)
     {
-        const char* name = totp_file_name_map[i];
-        if (name[0] == '\0')
-            break;
-        sche.put_string(4, 5+20*i, ASCII_1608, name);
-        if (i == onselect_file_index)
+        sche.put_string(4, 5+20*i, ASCII_1608, totp_list.seek(i));
+        if (i == totp_list.on_select() && !onSelect)
         {
             sche.rectangle(3, 5+20*i, 201, 17, 1);
         }
@@ -189,12 +116,7 @@ void render_totp(Scheme& sche, Control& self, bool onSelect)
     sche.clear()
         .texture(icon_bk_menu, self.x, self.y, self.w, self.h)
         .put_string(2, 2, ASCII_3216, "TOTP");
-    if (onSelect)
-    {
-        sche.rectangle(self.x, self.y, self.w, self.h, 2);
-    }
-
-    auto totp = OTP_TOTP(totp_file_name_map[onselect_file_index % TOTP_SEL_PAGE_SIZE]);
+    auto totp = OTP_TOTP(totp_list.seek(totp_list.on_select()));
     uint8_t off =  GUI_WIDTH/2 - 4*strlen(totp.getName());
     sche.rectangle(68, 93, 160, 2)
         .put_string(off, 36, ASCII_1608, totp.getName());

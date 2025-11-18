@@ -8,6 +8,9 @@ class OTP_TOTP
 public:
     enum {TOTP_NAME_MAX=26};
 
+    static constexpr char totp_dir_base[] = "otp/";
+    static constexpr char totp_suffix[] = ".totp";
+
     explicit OTP_TOTP(const char* totp_name);
     OTP_TOTP(const char* name, const uint8_t* key, uint8_t key_length);
     ~OTP_TOTP() = default;

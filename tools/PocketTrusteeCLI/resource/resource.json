@@ -1,5 +1,5 @@
 {
-    "version": "1.0.1",
+    "version": "1.0.2",
     "directory": [
         "gui_fg",
         "gui_idcard",
@@ -9,7 +9,7 @@
         "gui_pwd",
         "gui_trans",
         "idcards",
-        "namecards",
+        "namecard",
         "otp",
         "passwords",
         "texture",
@@ -33,8 +33,6 @@
         "gui_trans/trans": "transparent_mode.bin",
         "gui_manage/host": "host.bin",
         "gui_manage/respond": "responding.bin",
-        "texture/iccard": "texture_card.bin",
-        "namecards/demo.ncard": "namecard.bin",
-        "wifi/demo.wifi": "wifi.bin"
+        "texture/iccard": "texture_card.bin"
     }
 }

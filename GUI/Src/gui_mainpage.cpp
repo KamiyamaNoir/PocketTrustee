@@ -147,31 +147,13 @@ void render_cds_texture(Scheme& sche, Control& self, bool onSelect, int args)
     sche.texture(cache, self.x+self.w/2-32, self.y+self.h/2-12, 64, 24);
 }
 
-extern char emulate_idcard_name[25];
-
 void render_cds_idcard(Scheme& sche, Control& self, bool onSelect)
 {
     if (onSelect)
     {
         sche.rectangle(self.x, self.y, self.w, self.h, 2);
     }
-    if (emulate_idcard_name[0] != '\0')
-    {
-        char display[10];
-        uint8_t len = strlen(emulate_idcard_name);
-        if (len >= 10)
-        {
-            memcpy(display, emulate_idcard_name, 6);
-            memcpy(display+6, "...", 4);
-            len = 10;
-        }
-        uint8_t off = self.x+self.w/2-len*4;
-        sche.put_string(off, self.y+self.h/2-8, ASCII_1608, display);
-    }
-    else
-    {
-        sche.put_string(50, self.y+self.h/2-8, ASCII_1608, "OFF");
-    }
+    sche.put_string(50, self.y+self.h/2-7, ASCII_1608, "OFF");
 }
 
 void render_cds_icon(Scheme& sche, Control& self, bool onSelect)

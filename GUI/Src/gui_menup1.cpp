@@ -70,16 +70,22 @@ void clickon_menup1_trans(Window& wn, Display& dis, ui_operation& opt)
     dis.refresh_count = 0;
 }
 
+extern void wifi_card_update();
+
 void clickon_wifi_share(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
+    wifi_card_update();
     dis.switchFocusLag(&wn_wifi_share);
     dis.refresh_count = 0;
 }
 
+extern void namecard_update();
+
 void clickon_namecard(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
+    namecard_update();
     dis.switchFocusLag(&wn_namecard);
     dis.refresh_count = 0;
 }

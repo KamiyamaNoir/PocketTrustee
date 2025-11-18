@@ -352,6 +352,74 @@ class PocketTrusteeCLI(Cmd):
                 self.connection.send_idcard_list()
             except Exception as e:
                 self.poutput(e)
+                
+    # ====== WIFI Card Function ======
+    wificard_parser = Cmd2ArgumentParser()
+    wificard_sub = wificard_parser.add_subparsers(dest='subcmd', required=True, help='rename / delete / list')
+    
+    wificard_add = wificard_sub.add_parser('add', help='新建')
+    wificard_add.add_argument('ssid', type=str, help='WIFI SSID', nargs=1)
+    wificard_add.add_argument('pwd', type=str, help='WIFI Password', nargs=1)
+    
+    wificard_delete = wificard_sub.add_parser('delete', help='删除card')
+    wificard_delete.add_argument('ssid', type=str, nargs=1)
+    
+    wificard_list = wificard_sub.add_parser('list', help='列出所有card')
+    
+    @with_argparser(wificard_parser)
+    def do_wifi(self, args):
+        if args.subcmd == 'add':
+            try:
+                self.connection.send_wifi_add(args.ssid[0], args.pwd[0])
+            except Exception as e:
+                self.poutput(e)
+        elif args.subcmd == 'delete':
+            try:
+                self.connection.send_wifi_delete(args.ssid[0])
+            except Exception as e:
+                self.poutput(e)
+        elif args.subcmd == 'list':
+            try:
+                self.connection.send_wifi_list()
+            except Exception as e:
+                self.poutput(e)
+                
+    # ====== Namecard Function ======
+    namecard_parser = Cmd2ArgumentParser()
+    namecard_sub = namecard_parser.add_subparsers(dest='subcmd', required=True, help='rename / delete / list')
+    
+    namecard_add = namecard_sub.add_parser('add', help='新建')
+    namecard_add.add_argument('name', type=str, help='Your name', nargs=1)
+    namecard_add.add_argument('--TEL', type=str, help='Your phone number', nargs=1, required=False)
+    namecard_add.add_argument('--EMAIL', type=str, help='Your email address', nargs=1, required=False)
+    
+    namecard_delete = namecard_sub.add_parser('delete', help='删除card')
+    namecard_delete.add_argument('name', type=str, nargs=1)
+    
+    namecard_list = namecard_sub.add_parser('list', help='列出所有card')
+    
+    @with_argparser(namecard_parser)
+    def do_namecard(self, args):
+        if args.subcmd == 'add':
+            try:
+                kargs = {}
+                if args.TEL is not None:
+                    kargs['TEL'] = args.TEL[0]
+                if args.EMAIL is not None:
+                    kargs['EMAIL'] = args.EMAIL[0]
+                self.connection.send_namecard_add(args.name[0], **kargs)
+            except Exception as e:
+                self.poutput(e)
+        elif args.subcmd == 'delete':
+            try:
+                self.connection.send_namecard_delete(args.name[0])
+            except Exception as e:
+                self.poutput(e)
+        elif args.subcmd == 'list':
+            try:
+                self.connection.send_namecard_list()
+            except Exception as e:
+                self.poutput(e)
         
     # ====== Binary ======
     bianry_parser = Cmd2ArgumentParser()

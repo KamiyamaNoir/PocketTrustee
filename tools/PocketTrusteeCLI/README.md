@@ -48,6 +48,22 @@
 - `idcard list`  
 列出当前所有id卡
 
+### `wifi add, delete, list [-h] ...`
+管理WIFI卡片
+- `wifi add SSID PWD`
+新建一个WIFI卡片，指定SSID和PWD
+- `wifi delete SSID`
+删除一个WIFI卡片
+- `wifi list`
+列出所有的wifi卡片
+
+### `namecard add, delete, list [-h] ...`
+管理名片，用法基本和wifi卡片一样
+- `namecard add NAME [--TEL TEL] [--EMAIL EMAIL]`
+新建一个名片，名字为必填，可选参数TEL和EMAIL
+- `namecard delete NAME`
+- `namecard list`
+
 ### `backup`
 同步数据（备份数据）  
 密码，TOTP，ID卡数据会被同步到devices目录下对应设备名称的pkt文件内，**请注意pkt文件内原来的数据将会被覆盖**  

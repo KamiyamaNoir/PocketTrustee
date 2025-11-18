@@ -77,6 +77,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     BSP/Inc
     Apps/Inc
+    GUI/Inc
     # lib include file
     # LittleFS
     ./Lib/littlefs-2.11.1/
@@ -100,6 +101,8 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Remove wrong libob.a library dependency when using cpp files
 list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
 
 target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -u _printf_float)
 
