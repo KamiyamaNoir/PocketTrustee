@@ -39,8 +39,8 @@ void gui::GUI_Task()
     for (;;)
     {
         operation = 0;
-        xTaskNotifyStateClear(nullptr);
         xTaskNotifyWait(0xFFFFFFFFUL, 0xFFFFFFFFUL, &operation, portMAX_DELAY);
+        xTaskNotifyStateClear(nullptr);
         if (operation < 5)
         {
             gui_main.process(static_cast<gui::ui_operation>(operation - 2));

@@ -17,6 +17,22 @@ __STATIC_INLINE void TransmitData(const uint8_t* data, const uint16_t len)
     HAL_SPI_Transmit(&hspi2, data, len, HAL_MAX_DELAY);
 }
 
+__STATIC_INLINE void TransmitDataDMA(const uint8_t* data, const uint16_t len)
+{
+    DDC_GPIO_Port->BSRR = DDC_Pin;
+    HAL_SPI_Transmit_DMA(&hspi2, data, len);
+}
+
+__STATIC_INLINE void PollForSPI()
+{
+    uint16_t timeout = 1000;
+    while (HAL_SPI_GetState(&hspi2) != HAL_SPI_STATE_READY && timeout)
+    {
+        HAL_Delay(1);
+        --timeout;
+    }
+}
+
 __STATIC_INLINE void ByteData(const uint8_t data)
 {
     TransmitData(&data, 1);
@@ -50,9 +66,9 @@ static void ep_hardware_init(const epaper::EpaperMode mode)
 {
     // HWRST
     DRST_GPIO_Port->BRR = DRST_Pin;
-    HAL_Delay(10);
+    HAL_Delay(5);
     DRST_GPIO_Port->BSRR = DRST_Pin;
-    HAL_Delay(10);
+    HAL_Delay(1);
     BUSY;
     // Select internal temperture sensor
     CMD(0x18);
@@ -86,8 +102,7 @@ static void ep_hardware_init(const epaper::EpaperMode mode)
         BUSY;
         // Temperature Sensor Control
         CMD(0x1A);
-        if (mode == epaper::EP_FAST) DAT(0x64);
-        else DAT(0x5A);
+        DAT(0x64);
         DAT(0x00);
         // Display Update Control 2 -> 91
         CMD(0x22);
@@ -113,20 +128,6 @@ static void ep_hardware_init(const epaper::EpaperMode mode)
     }
 }
 
-void epaper::update(const uint8_t* data, const EpaperMode mode)
-{
-    ep_hardware_init(mode);
-    CMD(0x24);
-    TransmitData(data, EPD_ARRAY);
-    CMD(0x22);
-    if (mode == EP_FAST) DAT(0xC7);
-    else DAT(0xF7);
-    CMD(0x20);
-    BUSY;
-    CMD(0x10);
-    DAT(0x01);
-}
-
 /**
  * This function is used to pre-update the EPD fully, which is aimed to prepare for partial update
  * @param data Compelete sequence of data
@@ -137,87 +138,12 @@ void epaper::pre_update(const uint8_t* data)
     ep_hardware_init(EP_FULL);
     // However, both register 0x24 and 0x26 is expected to be written
     CMD(0x24);
-    TransmitData(data, EPD_ARRAY);
+    TransmitDataDMA(data, EPD_ARRAY);
+    PollForSPI();
     CMD(0x26);
-    TransmitData(data, EPD_ARRAY);
+    TransmitDataDMA(data, EPD_ARRAY);
+    PollForSPI();
     // Same as FULL_Update
-    CMD(0x22);
-    DAT(0xF7);
-    CMD(0x20);
-    BUSY;
-    CMD(0x10);
-    DAT(0x01);
-}
-
-/**
- * Reset and config necessary register.
- */
-void epaper::partial_preconfig()
-{
-    // HWRST
-    DRST_GPIO_Port->BRR = DRST_Pin;
-    HAL_Delay(10);
-    DRST_GPIO_Port->BSRR = DRST_Pin;
-    HAL_Delay(10);
-    BUSY;
-
-    // Border Waveform
-    CMD(0x3C);
-    DAT(0x80);
-}
-
-
-void epaper::partial_write_ram(const uint8_t* data, uint16_t rx, uint8_t cy, uint16_t rw, uint8_t ch)
-{
-    // EPD的原点在左下角，然而UI的原点在左上角，且XY刚好相反，此处需要注意
-    // 以EPD的原点计算，对齐EPD的x轴，y轴无需对齐
-    // 镜像翻转
-    uint8_t x_end = EPD_WIDTH/8 - cy - 1;
-    uint8_t x_start = EPD_WIDTH/8 - (cy+ch);
-
-    uint16_t y_start = rx;
-    uint16_t y_end = y_start + rw - 1;
-
-    // Data entry sequence -> X decrement, Y increment
-    CMD(0x11);
-    DAT(0x02);
-    // X Start End
-    CMD(0x44);
-    DAT(x_end);
-    DAT(x_start);
-    // Y Start End
-    CMD(0x45);
-    DAT(y_start%256);
-    DAT(y_start/256);
-    DAT(y_end%256);
-    DAT(y_end/256);
-    // Reset X address
-    CMD(0x4E);
-    DAT(x_end);
-    // Reset Y address
-    CMD(0x4F);
-    DAT(y_start%256);
-    DAT(y_start/256);
-
-    CMD(0x24);
-    TransmitData(data, rw*ch);
-}
-
-void epaper::partial_update()
-{
-    CMD(0x22);
-    DAT(0xFF);
-    CMD(0x20);
-    BUSY;
-    CMD(0x10);
-    DAT(0x01);
-}
-
-void epaper::update_full(const uint8_t* data)
-{
-    ep_hardware_init(EP_FULL);
-    CMD(0x24);
-    TransmitData(data, EPD_ARRAY);
     CMD(0x22);
     DAT(0xF7);
     CMD(0x20);
@@ -230,9 +156,11 @@ void epaper::update_fast(const uint8_t* data)
 {
     ep_hardware_init(EP_FAST);
     CMD(0x24);
-    TransmitData(data, EPD_ARRAY);
+    TransmitDataDMA(data, EPD_ARRAY);
+    PollForSPI();
     CMD(0x26);
-    TransmitData(data, EPD_ARRAY);
+    TransmitDataDMA(data, EPD_ARRAY);
+    PollForSPI();
     CMD(0x22);
     DAT(0xC7);
     CMD(0x20);
@@ -245,9 +173,9 @@ void epaper::update_part_full(const uint8_t* data)
 {
     // HWRST
     DRST_GPIO_Port->BRR = DRST_Pin;
-    HAL_Delay(10);
+    HAL_Delay(5);
     DRST_GPIO_Port->BSRR = DRST_Pin;
-    HAL_Delay(10);
+    HAL_Delay(1);
     BUSY;
 
     // Border Waveform
@@ -276,7 +204,8 @@ void epaper::update_part_full(const uint8_t* data)
     DAT(0x00);
 
     CMD(0x24);
-    TransmitData(data, EPD_ARRAY);
+    TransmitDataDMA(data, EPD_ARRAY);
+    PollForSPI();
 
     CMD(0x22);
     DAT(0xFF);
