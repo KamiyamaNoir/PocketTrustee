@@ -15,12 +15,13 @@ from device_fs import DeviceFS
 
 
 class PocketTrusteeCLI(Cmd):
+    version = '1.0.2'
     prompt = '(No Device)>'
     device_name = None
 
     def __init__(self):
         super().__init__()
-        self.intro = "PocketTrustee CLI Tool\nVersion 1.0"
+        self.intro = f"PocketTrustee CLI Tool\nVersion {self.version}"
         self.connection = None
     
     # ====== Connect ======
@@ -114,7 +115,6 @@ class PocketTrusteeCLI(Cmd):
             self.device_name = resp
             self.prompt = f'({resp})>'
             console.print(f"成功连接到:{self.connection.ser.port}", style='bold green')
-            self.invoke_backup()
         except Exception as e:
             conn.ser.close()
             console.print(f"连接请求被拒绝,{e}", style='bold red')
@@ -203,6 +203,7 @@ class PocketTrusteeCLI(Cmd):
         
     # ====== Disconnect ======
     def do_disconnect(self, args):
+        self.invoke_backup()
         self.connection.send_disconnect()
         self.connection.ser.close()
         self.connection = None
@@ -235,6 +236,21 @@ class PocketTrusteeCLI(Cmd):
     def do_recover(self, args):
         try:
             self.invoke_recover(args.path)
+        except Exception as e:
+            self.poutput(e)
+            
+    # ====== Password Export ======
+    pwd_export_parser = Cmd2ArgumentParser()
+    pwd_export_parser.add_argument('path', type=str, help='PKT文件路径')
+
+    @with_argparser(pwd_export_parser)
+    def do_export(self, args):
+        try:
+            dfs = DeviceFS.load_from_file(args.path)
+            pwd_dict = dfs.passwords
+            text = json.dumps(pwd_dict, indent=4)
+            open(args.path + '.txt', 'wt', encoding='UTF-8').write(text)
+            console.print("保存成功", style='bold green')
         except Exception as e:
             self.poutput(e)
             

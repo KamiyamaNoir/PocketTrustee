@@ -75,6 +75,10 @@ pkt文件内的密码数据将以明文保存，请注意**像保护ssh私钥一
 - PATH : 要还原的数据源pkt文件路径  
 目前仅还原密码，TOTP和ID卡
 
+### `export PATH`
+导出密码为txt文件，密码将以JSON形式打印保存为TXT文件
+- PATH : 要导出的数据源(pkt文件)
+
 ## SuperDebug命令表
 如果你不知道SuperDebug是干什么用的，说明你不需要用SuperDebug  
 这部分我将写得很简单，相信各位需要su的dever们可以看懂
