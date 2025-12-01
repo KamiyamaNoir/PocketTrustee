@@ -41,8 +41,10 @@ extern osThreadId defaultTaskHandle;
 
 // Cache size, which determines the maximum decoding and encoding size
 #define HOST_CACHE_SIZE 512
-__attribute__((section("._user_graphic_ram"))) static uint8_t receive_buffer[HOST_CACHE_SIZE];
-__attribute__((section("._user_graphic_ram"))) static uint8_t payload_buffer[HOST_CACHE_SIZE];
+// __attribute__((section("._user_graphic_ram"))) static uint8_t receive_buffer[HOST_CACHE_SIZE];
+// __attribute__((section("._user_graphic_ram"))) static uint8_t payload_buffer[HOST_CACHE_SIZE];
+static uint8_t receive_buffer[HOST_CACHE_SIZE];
+static uint8_t payload_buffer[HOST_CACHE_SIZE];
 
 // Export variables, showing the status of host
 volatile bool in_managermode = false;
@@ -110,7 +112,7 @@ uint8_t hostCommandInvoke(bool from_startup)
         int err = LittleFS::fs_format();
         if (err < 0)
         {
-            send_msg("error");
+            send_msg("format error");
             __set_FAULTMASK(1);
             NVIC_SystemReset();
         }

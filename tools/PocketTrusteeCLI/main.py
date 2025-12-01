@@ -94,10 +94,10 @@ class PocketTrusteeCLI(Cmd):
                 break
             key = self.connection.send_device_initialize(device_name, device_pin)
             if len(key) != 16:
-                console.print("发生错误", style='bold red')
+                console.print(f"发生错误,{key.decode(encoding='ascii')}", style='bold red')
                 return
             device_fs = DeviceFS(key)
-            device_fs.save_as_file(f'devices/{device_name}.pkt')
+            device_fs.save_as_file(f'./devices/{device_name}.pkt')
             self.invoke_init()
             return
         key_map = {

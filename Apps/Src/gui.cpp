@@ -8,8 +8,10 @@
 using namespace gui;
 
 /* =============USER CODE BEGIN GUI_RESOURCE================= */
-GRAPHIC_RAM_AREA uint8_t gram_cache[GUI_ARRAY];
-GRAPHIC_RAM_AREA uint8_t gram_end[GUI_ARRAY];
+// GRAPHIC_RAM_AREA uint8_t gram_cache[GUI_ARRAY];
+// GRAPHIC_RAM_AREA uint8_t gram_end[GUI_ARRAY];
+static uint8_t gram_cache[GUI_ARRAY];
+static uint8_t gram_end[GUI_ARRAY];
 
 static EPD_Handler handler {
     .full_update = epaper::pre_update,

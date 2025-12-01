@@ -51,10 +51,14 @@ static int flash_sync(const struct lfs_config *c)
 
 static lfs_t fs_instance;
 
-__attribute__((section("._user_graphic_ram"))) static uint8_t prog_cache[256];
-__attribute__((section("._user_graphic_ram"))) static uint8_t read_cache[256];
-__attribute__((section("._user_graphic_ram"))) static uint8_t lookahead_cache[32];
-__attribute__((section("._user_graphic_ram"))) static uint8_t open_cache[256];
+// __attribute__((section("._user_graphic_ram"))) static uint8_t prog_cache[256];
+// __attribute__((section("._user_graphic_ram"))) static uint8_t read_cache[256];
+// __attribute__((section("._user_graphic_ram"))) static uint8_t lookahead_cache[32];
+// __attribute__((section("._user_graphic_ram"))) static uint8_t open_cache[256];
+__aligned(4) static uint8_t prog_cache[256];
+__aligned(4) static uint8_t read_cache[256];
+__aligned(4) static uint8_t lookahead_cache[32];
+__aligned(4) static uint8_t open_cache[256];
 
 constexpr struct lfs_config config = {
     .read = flash_read,

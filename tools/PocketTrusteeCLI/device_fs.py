@@ -1,5 +1,6 @@
 import cbor2
 from Crypto.Cipher import AES
+import os
 
 
 class DeviceFS:
@@ -44,6 +45,8 @@ class DeviceFS:
             "key": self.key,
             "data": encrypto
         })
+        if not os.path.exists('devices'):
+            os.mkdir('devices')
         with open(path, 'wb') as f:
             f.write(fs_bytes)
         
