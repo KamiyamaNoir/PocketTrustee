@@ -476,8 +476,12 @@ bool invoke_fs_ls(zcbor_state_t* zcbor_state)
     CHECK_SUCCESS(success);
     ZCBOR_TO_CSTRING(zcbor_str, path);
     auto dir = LittleFS::fs_dir_handler(path);
-    char ls_str[256];
-    dir.list_str(ls_str, sizeof(ls_str));
+    char ls_str[256] {};
+    int err = dir.list_str(ls_str, sizeof(ls_str));
+    if (err < 0)
+    {
+        sprintf(ls_str, "error:%d", err);
+    }
     send(ls_str, strlen(ls_str));
     return true;
 }

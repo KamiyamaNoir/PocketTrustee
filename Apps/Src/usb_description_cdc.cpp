@@ -1,5 +1,4 @@
 #include "bsp_nfc.h"
-#include "cmsis_os.h"
 #include "simple_buffer.h"
 #include "usbd_core.h"
 #include "usbd_cdc_acm.h"
@@ -17,7 +16,7 @@
 /*!< config descriptor size */
 #define USB_CONFIG_SIZE (9 + CDC_ACM_DESCRIPTOR_LEN)
 
-#define CDC_MAX_MPS 128
+#define CDC_MAX_MPS 64
 
 static constexpr uint8_t device_descriptor[] = {
     USB_DEVICE_DESCRIPTOR_INIT(USB_2_0, 0xEF, 0x02, 0x01, USBD_VID, USBD_PID, 0x0100, 0x01)
