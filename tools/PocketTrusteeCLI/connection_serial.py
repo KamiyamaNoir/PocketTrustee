@@ -153,7 +153,7 @@ class Connection:
         if len(name) > 24:
             raise Exception("Too long name")
         # check key
-        if len(key) != 20 and len(key) != 16:
+        if len(key) < 2 or len(key) > 20:
             raise Exception("Unrecognized key")
         fbytes = cbor2.dumps([
             key,

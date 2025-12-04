@@ -60,7 +60,7 @@ class DeviceFS:
         })
     
     def add_totp(self, name: str, key: bytes, step: int=30, num_len: int=6):
-        if len(key) != 20:
+        if len(key) < 2 or len(key) > 20:
             raise ValueError("Wrong key")
         if len(name) > 25:
             raise ValueError("Too long name")
