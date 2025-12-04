@@ -324,7 +324,7 @@ class PocketTrusteeCLI(Cmd):
             try:
                 rename = args.name[1] if len(args.name) == 2 else None
                 repwd = args.pwd[0] if args.pwd is not None else None
-                reaccount = args.accountp[0] if args.account is not None else None
+                reaccount = args.account[0] if args.account is not None else None
                 self.connection.send_pwd_modify(args.name[0], repwd, reaccount, rename)
             except Exception as e:
                 self.poutput(e)
