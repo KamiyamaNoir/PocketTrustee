@@ -22,7 +22,6 @@
 #include "adc.h"
 #include "aes.h"
 #include "comp.h"
-#include "crc.h"
 #include "dac.h"
 #include "dma.h"
 #include "lptim.h"
@@ -116,7 +115,6 @@ int main(void)
   MX_ADC1_Init();
   MX_AES_Init();
   MX_COMP1_Init();
-  MX_CRC_Init();
   MX_DAC1_Init();
   MX_RNG_Init();
   MX_RTC_Init();

@@ -34,6 +34,8 @@ void HAL_Delay(uint32_t Delay)
 void sys_startup()
 {
     rfid::set_drive_mode(rfid::STOP);
+    cmox_init_arg_t init_target = {CMOX_INIT_TARGET_L4, nullptr};
+    cmox_initialize(&init_target);
     LittleFS::init();
 #ifndef DEBUG_ENABLE
     cdc_acm_init();

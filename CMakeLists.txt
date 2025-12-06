@@ -70,6 +70,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ./Lib/zcbor-0.9.1/src/zcbor_decode.c
     ./Lib/zcbor-0.9.1/src/zcbor_encode.c
     ./Lib/zcbor-0.9.1/src/zcbor_print.c
+
+    # STM32 Cryptographic
+    ./Lib/STM32_Cryptographic/cmox_low_level.c
 )
 
 # Add include paths

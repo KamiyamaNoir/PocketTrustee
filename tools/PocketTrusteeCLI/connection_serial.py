@@ -1,7 +1,8 @@
 from time import sleep
 from time import time
 import socket
-import binascii
+# import binascii
+import hashlib
 import serial
 import cbor2
 from Crypto.Cipher import AES
@@ -152,6 +153,11 @@ class Connection:
         # check name
         if len(name) > 24:
             raise Exception("Too long name")
+        # check if totp is already exist
+        totp_ls = self.send_su_file_ls('otp/')
+        totp_ls = totp_ls.split('\n')
+        if f'{name}.totp' in totp_ls:
+            raise SystemError("该TOTP已被创建")
         # check key
         if len(key) < 2 or len(key) > 20:
             raise Exception("Unrecognized key")
@@ -442,20 +448,21 @@ class Connection:
                     raise TimeoutError("设备未响应 - Transmit")
                 # rich progress
                 progress.update(task, advance=len(pak))
-                if nread != b'ok':
-                    # 有时候会把ok和CRC一起收到...虽然可以加一个同步，不过还是这样方便些（
-                    if nread[:2] != b'ok':
-                        raise SystemError(f"设备错误 - Transmit{nread.hex()}")
-                    if nread[2:] != int.to_bytes(binascii.crc32(fbytes), 4):
-                        raise SystemError("CRC校验错误")
-                    return
+                # check ok
+                if nread[:2] != b'ok':
+                    raise SystemError(f"设备错误 - Transmit{nread.hex()}")
+                if not more:
+                    # 有时候会把ok和SHA一起收到...
+                    if len(nread) != 2:
+                        nread = nread[2:]
+                    else:
+                        nread = self.wait_data(timeout=2000)
         # crc_check
-        expected = int.to_bytes(binascii.crc32(fbytes), 4)
-        nread = self.wait_data(timeout=2000)
+        expected = hashlib.sha1(fbytes).digest()
         if nread is None:
-            raise TimeoutError("设备未响应 - CRC Check")
+            raise TimeoutError("设备未响应 - SHA1 Check")
         if nread != expected:
-            raise SystemError("CRC校验错误")
+            raise SystemError("SHA1校验错误")
 
     def send_su_file_read(self, path: str) -> bytes:
         freads = bytearray()
@@ -489,10 +496,10 @@ class Connection:
             if not resp['more']:
                 break
         # crc_check
-        calculate = int.to_bytes(binascii.crc32(freads), 4)
+        calculate = hashlib.sha1(freads).digest()
         nread = self.wait_data(timeout=2000)
         if nread is None:
-            raise TimeoutError("设备未响应 - CRC Check")
+            raise TimeoutError("设备未响应 - SHA1 Check")
         if nread != calculate:
-            raise SystemError("CRC校验错误")
+            raise SystemError("SHA1校验错误")
         return bytes(freads)

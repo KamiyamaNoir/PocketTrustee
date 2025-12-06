@@ -1,6 +1,4 @@
 #include "crypto_base.h"
-#include "cmox_crypto.h"
-#include "crc.h"
 #include <cstring>
 #include "bsp_rtc.h"
 
@@ -11,36 +9,36 @@ using namespace crypto;
 #define LOWER_CASE "abcdefghijklmnopqrstuvwxyz"
 #define SPECIAL_CHARS "!@#$%^&*()_-+=[]{}|;:,.<>?`~"
 
-CRC_Handler::CRC_Handler()
-{
-    crc_result = 0xFFFFFFFF;
-    retval = CRYPTO_FAILED;
-}
-
-CRC_Handler& CRC_Handler::resume()
-{
-    hcrc.Instance->INIT = crc_result;
-    // when reset, the value in register INIT will be written in DR
-    __HAL_CRC_DR_RESET(&hcrc);
-    return *this;
-}
-
-CRC_Handler& CRC_Handler::next(uint8_t* buffer, uint16_t length)
-{
-    crc_result = HAL_CRC_Accumulate(&hcrc, reinterpret_cast<uint32_t*>(buffer), length);
-    return *this;
-}
-
-CRC_Handler& CRC_Handler::reset()
-{
-    crc_result = 0xFFFFFFFF;
-    return resume();
-}
-
-uint32_t CRC_Handler::result() const
-{
-    return crc_result ^ 0xFFFFFFFF;
-}
+// CRC_Handler::CRC_Handler()
+// {
+//     crc_result = 0xFFFFFFFF;
+//     retval = CRYPTO_FAILED;
+// }
+//
+// CRC_Handler& CRC_Handler::resume()
+// {
+//     hcrc.Instance->INIT = crc_result;
+//     // when reset, the value in register INIT will be written in DR
+//     __HAL_CRC_DR_RESET(&hcrc);
+//     return *this;
+// }
+//
+// CRC_Handler& CRC_Handler::next(uint8_t* buffer, uint16_t length)
+// {
+//     crc_result = HAL_CRC_Accumulate(&hcrc, reinterpret_cast<uint32_t*>(buffer), length);
+//     return *this;
+// }
+//
+// CRC_Handler& CRC_Handler::reset()
+// {
+//     crc_result = 0xFFFFFFFF;
+//     return resume();
+// }
+//
+// uint32_t CRC_Handler::result() const
+// {
+//     return crc_result ^ 0xFFFFFFFF;
+// }
 
 // CRYPTO_RESULT crypto::sha256(const uint8_t* message, uint8_t* sha, const uint16_t msg_len)
 // {

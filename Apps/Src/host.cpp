@@ -376,26 +376,34 @@ bool invoke_fswrite(zcbor_state_t* zcbor_state)
         send("ok", 2);
         if (!more) break;
     }
-    // CRC Check
+    // SHA1 Check
+    uint8_t feedback[20] = {};
+    cmox_sha1_handle_t sha1;
+    cmox_hash_handle_t* hash = cmox_sha1_construct(&sha1);
+    cmox_hash_init(hash);
+    cmox_hash_setTagLen(hash, 20);
     file.seek(0);
-    auto crc = crypto::CRC_Handler();
-    crc.resume();
     for (;;)
     {
         uint8_t buffer[128];
-        uint16_t fsread = file.read(buffer, sizeof(buffer));
-        crc.next(buffer, fsread);
-        if (fsread < sizeof(buffer))
+        int fsread = file.read(buffer, sizeof(buffer));
+        if (fsread < 0)
+        {
+            send("error", 5);
+            return false;
+        }
+        cmox_hash_append(hash, buffer, fsread);
+        if (fsread < 128)
             break;
     }
-    uint32_t crc_result = crc.result();
-    uint8_t feedback[4] = {
-        static_cast<uint8_t>(crc_result >> 24),
-        static_cast<uint8_t>(crc_result >> 16),
-        static_cast<uint8_t>(crc_result >> 8),
-        static_cast<uint8_t>(crc_result),
-    };
-    send(feedback, 4);
+    size_t computed = 0;
+    cmox_hash_generateTag(hash, feedback, &computed);
+    if (computed != 20)
+    {
+        send("error", 5);
+        return false;
+    }
+    send(feedback, 20);
     return true;
 }
 
@@ -443,26 +451,55 @@ bool invoke_fsread(zcbor_state_t* zcbor_state)
         if (!more) break;
     }
     // CRC Check
+    // file.seek(0);
+    // auto crc = crypto::CRC_Handler();
+    // crc.resume();
+    // for (;;)
+    // {
+    //     uint8_t buffer[128];
+    //     int fsread = file.read(buffer, sizeof(buffer));
+    //     if (fsread < 0) return false;
+    //     crc.next(buffer, fsread);
+    //     if (fsread < 128)
+    //         break;
+    // }
+    // uint32_t crc_result = crc.result();
+    // uint8_t feedback[4] = {
+    //     static_cast<uint8_t>(crc_result >> 24),
+    //     static_cast<uint8_t>(crc_result >> 16),
+    //     static_cast<uint8_t>(crc_result >> 8),
+    //     static_cast<uint8_t>(crc_result),
+    // };
+    // send(feedback, 4);
+
+    // SHA1 Check
+    uint8_t feedback[20] = {};
+    cmox_sha1_handle_t sha1;
+    cmox_hash_handle_t* hash = cmox_sha1_construct(&sha1);
+    cmox_hash_init(hash);
+    cmox_hash_setTagLen(hash, 20);
     file.seek(0);
-    auto crc = crypto::CRC_Handler();
-    crc.resume();
     for (;;)
     {
         uint8_t buffer[128];
         int fsread = file.read(buffer, sizeof(buffer));
-        if (fsread < 0) return false;
-        crc.next(buffer, fsread);
+        if (fsread < 0)
+        {
+            send("error", 5);
+            return false;
+        }
+        cmox_hash_append(hash, buffer, fsread);
         if (fsread < 128)
             break;
     }
-    uint32_t crc_result = crc.result();
-    uint8_t feedback[4] = {
-        static_cast<uint8_t>(crc_result >> 24),
-        static_cast<uint8_t>(crc_result >> 16),
-        static_cast<uint8_t>(crc_result >> 8),
-        static_cast<uint8_t>(crc_result),
-    };
-    send(feedback, 4);
+    size_t computed = 0;
+    cmox_hash_generateTag(hash, feedback, &computed);
+    if (computed != 20)
+    {
+        send("error", 5);
+        return false;
+    }
+    send(feedback, 20);
     return true;
 }
 

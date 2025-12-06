@@ -19,7 +19,7 @@
 增加一个TOTP  
 参数`NAME`为显示的totp名称，不超过25个ascii字符  
 参数`KEY`为totp密钥  
-可选参数`format`指定密钥的格式，可选hex, base64, base32，默认为hex  
+可选参数`format`指定密钥的格式，可选hex, base64, base32，默认为base32  
 - `totp delete --name NAME`  
 删除一个指定的totp  
 - `totp list`  

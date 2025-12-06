@@ -261,7 +261,7 @@ class PocketTrusteeCLI(Cmd):
     totp_add = totp_sub.add_parser('add', help='新增一个totp')
     totp_add.add_argument('--name', type=str, help='TOTP名称', required=True, nargs=1)
     totp_add.add_argument('--key', type=str, help='TOTP密钥', required=True, nargs=1)
-    totp_add.add_argument('--format', type=str, help='密钥的格式,可选base64, base32, hex', required=False, nargs=1, default='hex')
+    totp_add.add_argument('--format', type=str, help='密钥的格式,可选base64, base32, hex', required=False, nargs=1, default=['base32'])
     
     totp_delete = totp_sub.add_parser('delete', help='删除totp')
     totp_delete.add_argument('--name', type=str, required=True, nargs=1)
