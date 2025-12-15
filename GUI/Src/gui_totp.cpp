@@ -94,6 +94,11 @@ void clickon_totp_exit(Window& wn, Display& dis, ui_operation& opt)
 void render_totp_sel(Scheme& sche, Control& self, bool onSelect)
 {
     sche.clear();
+    if (totp_list.item_count() == 0)
+    {
+        sche.put_string(92, 56, ASCII_1608, "Nothing Here :(");
+        return;
+    }
     // Display icon
     sche.texture(icon_bk_menu, self.x, self.y, self.w, self.h);
     if (onSelect)

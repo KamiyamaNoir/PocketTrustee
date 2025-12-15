@@ -203,6 +203,11 @@ void render_idcard(Scheme& sche, Control& self, bool onSelect)
 
 void render_idcard_select(Scheme& sche, Control& self, bool onSelect)
 {
+    if (idcard_list.item_count() == 0)
+    {
+        sche.put_string(92, 56, ASCII_1608, "Nothing Here :(");
+        return;
+    }
     // Display icon
     sche.texture(icon_bk_menu, self.x, self.y, self.w, self.h);
     if (onSelect)

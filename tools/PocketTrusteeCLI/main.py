@@ -15,7 +15,7 @@ from device_fs import DeviceFS
 
 
 class PocketTrusteeCLI(Cmd):
-    version = '1.0.2'
+    version = '1.0.4'
     prompt = '(No Device)>'
     device_name = None
 
@@ -32,72 +32,46 @@ class PocketTrusteeCLI(Cmd):
     connect_parser.add_argument('-a', '--auto', help='尝试自动连接', action='store_true')
     connect_parser.add_argument('--init', help='初始化设备', action='store_true')
 
+    def connect_to_port(self, port):
+        conn = Connection(port)
+        rtvl = conn.is_availiable(self.version)
+        if isinstance(rtvl, bool) and rtvl:
+            self.connection = conn
+        elif isinstance(rtvl, str):
+            raise SystemError(f"设备版本与CLI不匹配({self.version} -- {rtvl})")
+        else:
+            raise TimeoutError("设备未响应")
+
     @with_argparser(connect_parser)
     def do_connect(self, args):
         ports = list_ports.comports()
         if not ports:
             console.print("可用串口为空，请检查连接")
             return
+        # Auto connect
         if args.auto:
             for port in ports:
                 try:
-                    conn = Connection(port.device)
-                    if conn.is_availiable():
-                        self.connection = conn
-                    else:
-                        continue
-                except:
+                    self.connect_to_port(port.device)
+                except SystemError as e:
+                    console.print(e)
+                except TimeoutError:
                     continue
             if not self.connection:
                 console.print("无可用设备")
                 return
         elif args.port is None:
+            console.print("可用串口:")
             [console.print(port.description) for port in ports] # pylint: disable=W0106
             return
         else:
             try:
-                conn = Connection(args.port[0])
-                if conn.is_availiable():
-                    self.connection = conn
-                else:
-                    console.print("设备无响应")
-                    return
+                self.connect_to_port(args.port[0])
             except Exception as e:
                 console.print(f"打开串口失败：{e}")
                 return
+        # Initialize
         if args.init:
-            console.print("警告:这将重置设备并删除所有数据,是否继续(Y/N)", style='bold red')
-            ans = input()
-            if ans.upper() != 'Y':
-                return
-            reset_resp = self.connection.send_reset()
-            if reset_resp != b'ok':
-                console.print("设备已重启,请重新连接", style='blue')
-                return
-            console.print("输入你期望的设备名称,不超过25个字符,留空默认")
-            device_name = 'PocketTrustee'
-            while True:
-                ans = input()
-                if len(ans) > 25:
-                    console.print("名称过长,请重新输入", style='bold red')
-                    continue
-                if len(ans) != 0:
-                    device_name = ans
-                break
-            console.print("输入你的6位PIN码,[red]设定后不可修改")
-            device_pin = ''
-            while True:
-                device_pin = input()
-                if len(device_pin) != 6 or not device_pin.isnumeric():
-                    console.print("PIN格式错误,请重新输入", style='bold red')
-                    continue
-                break
-            key = self.connection.send_device_initialize(device_name, device_pin)
-            if len(key) != 16:
-                console.print(f"发生错误,{key.decode(encoding='ascii')}", style='bold red')
-                return
-            device_fs = DeviceFS(key)
-            device_fs.save_as_file(f'./devices/{device_name}.pkt')
             self.invoke_init()
             return
         key_map = {
@@ -116,7 +90,7 @@ class PocketTrusteeCLI(Cmd):
             self.prompt = f'({resp})>'
             console.print(f"成功连接到:{self.connection.ser.port}", style='bold green')
         except Exception as e:
-            conn.ser.close()
+            self.connection.ser.close()
             console.print(f"连接请求被拒绝,{e}", style='bold red')
             return
         
@@ -130,9 +104,12 @@ class PocketTrusteeCLI(Cmd):
                 continue
             fbytes = self.connection.send_su_file_read(f'passwords/{file_name}')
             fb_decrypto = self.connection.aes.decrypt(fbytes)
-            flist = cbor2.loads(fb_decrypto)
-            dfs.add_password(file_name[:-4], flist[0], flist[1])
-            console.print(f'Backup: {file_name}')
+            try:
+                flist = cbor2.loads(fb_decrypto)
+                dfs.add_password(file_name[:-4], flist[0], flist[1])
+                console.print(f'Backup: {file_name}')
+            except:
+                continue
         # Load totp
         dfs.totp.clear()
         file_ls = self.connection.send_su_file_ls('otp/').split('\n')
@@ -188,8 +165,43 @@ class PocketTrusteeCLI(Cmd):
         console.print('还原完成', style='bold green')
 
     def invoke_init(self):
+        console.print("警告:这将重置设备并删除所有数据,是否继续(Y/N)", style='bold red')
+        ans = input()
+        if ans.upper() != 'Y':
+            return
+        reset_resp = self.connection.send_reset()
+        if reset_resp != b'ok':
+            console.print("设备已重启,请重新连接", style='blue')
+            return
+        console.print("输入你期望的设备名称,不超过25个字符,留空默认")
+        device_name = 'PocketTrustee'
+        while True:
+            ans = input()
+            if len(ans) > 25:
+                console.print("名称过长,请重新输入", style='bold red')
+                continue
+            if len(ans) != 0:
+                device_name = ans
+            break
+        console.print("输入你的6位PIN码,[red]设定后不可修改")
+        device_pin = ''
+        while True:
+            device_pin = input()
+            if len(device_pin) != 6 or not device_pin.isnumeric():
+                console.print("PIN格式错误,请重新输入", style='bold red')
+                continue
+            break
+        key = self.connection.send_device_initialize(device_name, device_pin)
+        if len(key) != 16:
+            console.print(f"发生错误,{key.hex()}", style='bold red')
+            return
+        device_fs = DeviceFS(key)
+        device_fs.save_as_file(f'./devices/{device_name}.pkt')
         finfo = open('./resource/resource.json', 'r', encoding='utf-8')
         finfo = json.loads(finfo.read())
+        if finfo['version'] != self.version:
+            console.print("资源库和CLI版本不匹配", style='bold red')
+            return
         for tdir in finfo['directory']:
             console.print(f'mkdir {tdir}', style='bold blue')
             resp = self.connection.send_su_file_mkdir(tdir)

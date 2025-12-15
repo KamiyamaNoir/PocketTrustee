@@ -77,6 +77,7 @@ uint8_t hostCommandInvoke(bool from_startup)
         return 0;
     // Decode request
     uint16_t nread = cdc_receive_ring_buffer.read(receive_buffer, HOST_CACHE_SIZE);
+    if (nread == 0) return 0;
     zcbor_string zcbor_str = {};
     ZCBOR_STATE_D(zcbor_state, 2, receive_buffer, HOST_CACHE_SIZE, 1, 0);
     bool success = zcbor_map_start_decode(zcbor_state);
@@ -87,10 +88,12 @@ uint8_t hostCommandInvoke(bool from_startup)
     CHECK_SUCCESS(success);
     char require_desc[32];
     ZCBOR_TO_CSTRING(zcbor_str, require_desc);
-    // Req : Hello -> send back hello
+    // Req : Hello -> send back version
     if (IS_COMMAND(require_desc, "hello"))
     {
-        send(receive_buffer, nread);
+        char v_str[32] {};
+        sprintf(v_str, "trustee:%u.%u.%u", version_c1, version_c2, version_c3);
+        send(v_str, strlen(v_str));
         return 1;
     }
     // Req : reset
@@ -411,7 +414,7 @@ bool invoke_fsread(zcbor_state_t* zcbor_state)
 {
     bool success = false;
     zcbor_string zcbor_str = {};
-    char path[32];
+    char path[64];
     success = zcbor_tstr_expect_ptr(zcbor_state, "path", 4);
     success = success && zcbor_tstr_decode(zcbor_state, &zcbor_str);
     CHECK_SUCCESS(success);

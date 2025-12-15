@@ -4,7 +4,7 @@
 #include "gui_resource.h"
 #include "lfs_base.h"
 
-#define GUI_MAINPAGE_CTRNUM 7
+#define GUI_MAINPAGE_CTRNUM 10
 #define GUI_ICCARD_CTRNUM 4
 
 using namespace gui;
@@ -15,30 +15,42 @@ extern Window wn_pwdgen;
 extern Window wn_pwd_list;
 extern Window wn_idcard_select;
 extern Window wn_totp_sel;
+extern Window wn_manager_mode;
+extern Window wn_wifi_share;
+extern Window wn_transmode;
+extern osThreadId manager_taskHandle;
+extern void cdc_acm_init();
 
 void clickon_cds_ic(Window& wn, Display& dis, ui_operation& opt);
 void clickon_cds_id(Window& wn, Display& dis, ui_operation& opt);
 void clickon_cds_pwdgen(Window& wn, Display& dis, ui_operation& opt);
 void clickon_cds_pwdfill(Window& wn, Display& dis, ui_operation& opt);
 void clickon_cds_totp(Window& wn, Display& dis, ui_operation& opt);
+void clickon_cds_cards(Window& wn, Display& dis, ui_operation& opt);
+void clickon_cds_transparent(Window& wn, Display& dis, ui_operation& opt);
+void clickon_cds_host(Window& wn, Display& dis, ui_operation& opt);
+
 void clickon_boxcard(Window& wn, Display& dis, ui_operation& opt, int args);
 void cb_backto_mainpage(Window& wn, Display& dis, ui_operation& opt);
 
 extern void render_rectangle(Scheme& sche, Control& self, bool onSelect);
 void render_cds_texture(Scheme& sche, Control& self, bool onSelect, int args);
-void render_cds_idcard(Scheme& sche, Control& self, bool onSelect);
 void render_cds_icon(Scheme& sche, Control& self, bool onSelect);
 
 Control controls_card_selection[GUI_MAINPAGE_CTRNUM]
 {
-    // IC Card and ID Card
-    {5, 25, 110,29, true, clickon_cds_ic, [](Scheme& a, Control& b, bool c) -> void {render_cds_texture(a, b, c, -1);}},
-    {5, 79, 110, 29, true, clickon_cds_id, render_cds_idcard},
     // Quick Tools
-    {133, 24, 100,23, true, clickon_cds_pwdgen, render_rectangle},
-    {133, 44, 100, 23, true, clickon_cds_pwdfill, render_rectangle},
-    {133, 62, 100,23, true, clickon_cds_totp, render_rectangle},
-    {133, 82, 100, 22, true, cb_backto_menup1, render_rectangle},
+    {7, 23, 100,23, true, clickon_cds_pwdgen, render_rectangle},
+    {7, 44, 100, 23, true, clickon_cds_pwdfill, render_rectangle},
+    {7, 62, 100,23, true, clickon_cds_totp, render_rectangle},
+    {7, 82, 100,23, true, clickon_cds_id, render_rectangle},
+    // IC Card
+    {143, 29, 126,28, true, clickon_cds_ic, [](Scheme& a, Control& b, bool c) -> void {render_cds_texture(a, b, c, -1);}},
+    // Tools
+    {139, 65, 34, 37, true, clickon_cds_cards, render_rectangle},
+    {175, 65, 34, 37, true, clickon_cds_transparent, render_rectangle},
+    {209, 65, 34, 37, true, clickon_cds_host, render_rectangle},
+    {244, 65, 37, 37, true, cb_backto_menup1, render_rectangle},
     // Icon
     {0, 0, 1, 1, false, nullptr, render_cds_icon},
 };
@@ -134,26 +146,45 @@ void clickon_cds_totp(Window& wn, Display& dis, ui_operation& opt)
     dis.refresh_count = 0;
 }
 
+extern void wifi_card_update();
+
+void clickon_cds_cards(Window& wn, Display& dis, ui_operation& opt)
+{
+    if (opt != OP_ENTER) return;
+    wifi_card_update();
+    dis.switchFocusLag(&wn_wifi_share);
+    dis.refresh_count = 0;
+}
+
+void clickon_cds_transparent(Window& wn, Display& dis, ui_operation& opt)
+{
+    if (opt != OP_ENTER) return;
+    nfc::enable_transparent_mode();
+    dis.switchFocusLag(&wn_transmode);
+    dis.refresh_count = 0;
+}
+
+extern bool in_managermode;
+
+void clickon_cds_host(Window& wn, Display& dis, ui_operation& opt)
+{
+    if (opt != OP_ENTER) return;
+    in_managermode = true;
+    cdc_acm_init();
+    dis.switchFocusLag(&wn_manager_mode);
+    dis.refresh_count = 0;
+    vTaskResume(manager_taskHandle);
+}
+
 void render_cds_texture(Scheme& sche, Control& self, bool onSelect, int args)
 {
     render_rectangle(sche, self, onSelect);
-    LittleFS::fs_file_handler texture("texture/iccard");
+    uint16_t off = 0;
     if (args == -1)
-        texture.seek(192*nfc_current_route);
+        off = 192*nfc_current_route;
     else
-        texture.seek(192*args);
-    uint8_t cache[192];
-    texture.read(cache, 192);
-    sche.texture(cache, self.x+self.w/2-32, self.y+self.h/2-12, 64, 24);
-}
-
-void render_cds_idcard(Scheme& sche, Control& self, bool onSelect)
-{
-    if (onSelect)
-    {
-        sche.rectangle(self.x, self.y, self.w, self.h, 2);
-    }
-    sche.put_string(50, self.y+self.h/2-7, ASCII_1608, "OFF");
+        off = 192*args;
+    sche.texture(&texture_icmode[off], self.x+self.w/2-32, self.y+self.h/2-12, 64, 24);
 }
 
 void render_cds_icon(Scheme& sche, Control& self, bool onSelect)

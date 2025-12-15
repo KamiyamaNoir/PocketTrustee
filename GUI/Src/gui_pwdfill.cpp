@@ -64,12 +64,12 @@ Control controls_pwd_list[GUI_PWDLIST_CTRNUM]
     // Page Up and Down
     {217, 29, 18, 18, true, clickon_pwd_pageup, render_rectangle},
     {217, 66, 18, 18, true, clickon_pwd_pagedown, render_rectangle},
-    // Key
-    {246, 69, 47, 18, true, clickon_pwd_key, render_rectangle},
     // Account
-    {246, 87, 47, 18, true, clickon_pwd_account, render_rectangle},
+    {246, 69, 47, 18, true, clickon_pwd_account, render_rectangle},
+    // Key
+    {246, 89, 47, 18, true, clickon_pwd_key, render_rectangle},
     // Delete
-    {246, 107, 47, 18, true, clickon_pwd_delete, render_rectangle},
+    {246, 109, 47, 18, true, clickon_pwd_delete, render_rectangle},
 };
 Control controls_pwd_fail[GUI_PWDFILL_FAIL_CTRNUM]
 {
@@ -175,7 +175,7 @@ void clickon_pwd_delete(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
     current_pwd.remove();
-    pwd_list.update();
+    pwd_dir_update();
 }
 
 void render_pwd_list(Scheme& sche, Control& self, bool onSelect)

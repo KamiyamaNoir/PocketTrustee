@@ -8,6 +8,11 @@
 
 int PasswordFile::load(const char* pwd_name)
 {
+    if (pwd_name == nullptr || pwd_name[0] == '\0')
+    {
+        return -1;
+    }
+
     if (strlen(pwd_name) > PWD_NAME_MAX)
     {
         return -1;
@@ -23,8 +28,11 @@ int PasswordFile::load(const char* pwd_name)
     uint8_t fbytes_encrypto[128];
     uint8_t fbytes_plaintext[sizeof(fbytes_encrypto)];
 
-    auto fs = LittleFS::fs_file_handler(path);
-    int err = fs.read(fbytes_encrypto, sizeof(fbytes_encrypto));
+    int err;
+    auto fs = LittleFS::fs_file_handler(path, LFS_O_RDONLY, &err);
+    if (err < 0)
+        return err;
+    err = fs.read(fbytes_encrypto, sizeof(fbytes_encrypto));
 
     if (err < 0)
         return err;
@@ -104,11 +112,6 @@ int PasswordFile::remove(const char* name)
 
 int PasswordFile::remove()
 {
-    if (name[0] == '\0')
-    {
-        return -1;
-    }
-
     char path[PWD_NAME_MAX + sizeof(pwd_dir) + sizeof(pwd_suffix)];
     strcpy(path, pwd_dir);
     strcat(path, name);

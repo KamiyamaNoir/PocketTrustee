@@ -42,15 +42,16 @@ class Connection:
     def send_data(self, data: bytes):
         self.ser.write(data)
 
-    def is_availiable(self):
+    def is_availiable(self, version: str):
         self.clear_buffer()
         # send hello
         self.send_data(b'\xA1\x63\x72\x65\x71\x65\x68\x65\x6C\x6C\x6F')
         nread = self.wait_data()
-        if nread is not None:
-            decodes = cbor2.loads(nread)
-            if decodes['req'] == 'hello':
+        if nread is not None and len(nread) > 8 and nread[:8] == b'trustee:':
+            nread = nread.decode(encoding='ascii')
+            if nread[8:] == version:
                 return True
+            return nread[8:]
         return False
     
     def send_reset(self):
@@ -93,7 +94,7 @@ class Connection:
         while True:
             nread = self.wait_data(timeout=2000)
             if nread is None:
-                raise TimeoutError("连接被拒绝")
+                raise TimeoutError("验证超时")
             if nread == b'wait':
                 self.send_data('ok'.encode(encoding='ascii'))
                 continue

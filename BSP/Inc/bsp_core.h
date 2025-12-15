@@ -6,6 +6,10 @@
 #ifdef __cplusplus
 // < CPP FILE >
 
+constexpr uint8_t version_c1 = 1;
+constexpr uint8_t version_c2 = 0;
+constexpr uint8_t version_c3 = 4;
+
 enum BSP_Status
 {
     BSP_OK,

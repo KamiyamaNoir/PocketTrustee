@@ -93,7 +93,7 @@ public:
     uint8_t page_count() const
     {
         if (_item_count == 0)
-            return 0;
+            return 1;
         return (_item_count-1) / PAGE_SIZE + 1;
     }
 
