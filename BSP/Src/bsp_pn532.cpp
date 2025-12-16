@@ -1,6 +1,6 @@
 #include "bsp_pn532.h"
 #include "usart.h"
-#include "simple_buffer.h"
+#include "simple_buffer.hpp"
 #include <cstring>
 
 using namespace pn532;

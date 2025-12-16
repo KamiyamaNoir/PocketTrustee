@@ -248,12 +248,4 @@ SECTIONS
     libgcc.a:* ( * )
   }
 
-  /* Graphic RAM use RAM2 */
-  ._user_graphic_ram :
-  {
-    . = ALIGN(4);
-    *(._user_graphic_ram)
-    . = ALIGN(4);
-  } >RAM2
-
 }

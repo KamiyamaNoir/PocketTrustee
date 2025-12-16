@@ -3,12 +3,11 @@
 #include "bsp_nfc.h"
 #include "bsp_rfid.h"
 #include "cmsis_os.h"
-#include "crypto_base.h"
+#include "crypto_base.hpp"
 #include "tim.h"
-#include "gui.h"
-#include "host.h"
+#include "gui.hpp"
+#include "host.hpp"
 #include "usart.h"
-#include "lfs_base.h"
 
 extern gui::Display gui_main;
 

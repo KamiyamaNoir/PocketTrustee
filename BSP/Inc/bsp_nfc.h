@@ -22,6 +22,8 @@ namespace nfc
     void disable_transparent_mode();
     void transparent_send_cb();
     void transparent_recv_cb(uint16_t size);
+
+    extern NFC_Route nfc_current_route;
 }
 
 #endif

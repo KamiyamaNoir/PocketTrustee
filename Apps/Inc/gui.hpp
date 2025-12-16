@@ -4,8 +4,6 @@
 #include "main.h"
 #include "cmsis_os.h"
 
-#define GRAPHIC_RAM_AREA __attribute__((section("._user_graphic_ram")))
-
 #define GUI_WIDTH 296
 #define GUI_HEIGHT 128
 #define GUI_ARRAY 4736
@@ -144,5 +142,8 @@ namespace gui
     };
 
     void GUI_Task();
+
+    /* Public Function */
+    void render_rectangle(Scheme& sche, Control& self, bool onSelect);
 }
 #endif //APP_GUI_H

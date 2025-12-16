@@ -1,16 +1,16 @@
-#include "host.h"
+#include "host.hpp"
 #include "zcbor_common.h"
 #include "zcbor_encode.h"
 #include "zcbor_decode.h"
 #include <cstdio>
 #include "aes.h"
-#include "simple_buffer.h"
-#include "crypto_base.h"
-#include "gui.h"
+#include "simple_buffer.hpp"
+#include "crypto_base.hpp"
+#include "gui.hpp"
 #include "lfs_base.h"
 #include "cmsis_os.h"
 #include "bsp_rtc.h"
-#include "pin_code.h"
+#include "pin_code.hpp"
 
 // CDC Transmit and Receive
 extern StaticRingBuffer cdc_receive_ring_buffer;
@@ -41,8 +41,6 @@ extern osThreadId defaultTaskHandle;
 
 // Cache size, which determines the maximum decoding and encoding size
 #define HOST_CACHE_SIZE 512
-// __attribute__((section("._user_graphic_ram"))) static uint8_t receive_buffer[HOST_CACHE_SIZE];
-// __attribute__((section("._user_graphic_ram"))) static uint8_t payload_buffer[HOST_CACHE_SIZE];
 static uint8_t receive_buffer[HOST_CACHE_SIZE];
 static uint8_t payload_buffer[HOST_CACHE_SIZE];
 

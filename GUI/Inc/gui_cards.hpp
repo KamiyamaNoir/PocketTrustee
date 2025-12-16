@@ -1,0 +1,6 @@
+#ifndef POCKETTRUSTEE_GUI_CARDS_HPP
+#define POCKETTRUSTEE_GUI_CARDS_HPP
+
+#include "gui.hpp"
+
+#endif //POCKETTRUSTEE_GUI_CARDS_HPP

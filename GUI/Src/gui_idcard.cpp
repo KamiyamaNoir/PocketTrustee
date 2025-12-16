@@ -1,4 +1,6 @@
-#include "gui.h"
+#include "gui_idcard.hpp"
+#include "gui_mainpage.hpp"
+#include "gui_menup1.hpp"
 #include "bsp_rfid.h"
 #include <cstring>
 #include <cstdio>
@@ -19,22 +21,18 @@ using rfid::IDCard;
 
 ComponentList<IDCARD_PAGE_SIZE, IDCard::IDCARD_NAME_MAX> idcard_list(IDCard::idcard_dir_base, IDCard::idcard_suffix);
 
-extern Window wn_menu_page1;
-extern Window wn_cds;
+static void clickon_idcard_start(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_idcard_save(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_iccard_exit(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_idcard_sel_exit(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_idcard_sel(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_idcard_saved_ok(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_idcard_emulate_exit(Window& wn, Display& dis, ui_operation& opt);
 
-void clickon_idcard_start(Window& wn, Display& dis, ui_operation& opt);
-void clickon_idcard_save(Window& wn, Display& dis, ui_operation& opt);
-void clickon_iccard_exit(Window& wn, Display& dis, ui_operation& opt);
-void clickon_idcard_sel_exit(Window& wn, Display& dis, ui_operation& opt);
-void clickon_idcard_sel(Window& wn, Display& dis, ui_operation& opt);
-void clickon_idcard_saved_ok(Window& wn, Display& dis, ui_operation& opt);
-void clickon_idcard_emulate_exit(Window& wn, Display& dis, ui_operation& opt);
-
-extern void render_rectangle(Scheme& sche, Control& self, bool onSelect);
-void render_idcard(Scheme& sche, Control& self, bool onSelect);
-void render_idcard_select(Scheme& sche, Control& self, bool onSelect);
-void render_idcard_saved(Scheme& sche, Control& self, bool onSelect);
-void render_idcard_emulate(Scheme& sche, Control& self, bool onSelect);
+static void render_idcard(Scheme& sche, Control& self, bool onSelect);
+static void render_idcard_select(Scheme& sche, Control& self, bool onSelect);
+static void render_idcard_saved(Scheme& sche, Control& self, bool onSelect);
+static void render_idcard_emulate(Scheme& sche, Control& self, bool onSelect);
 
 Control controls_idcard[GUI_IDCARD_CTRNUM]
 {

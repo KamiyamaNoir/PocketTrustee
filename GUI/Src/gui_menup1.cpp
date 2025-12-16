@@ -1,38 +1,31 @@
-#include "gui.h"
+#include "gui_menup1.hpp"
+#include "gui_transmode.hpp"
+#include "gui_about.hpp"
+#include "gui_idcard.hpp"
+#include "gui_manager_mode.hpp"
+#include "gui_fingerprint.hpp"
+#include "gui_lock.hpp"
 #include "bsp_nfc.h"
-#include "cmsis_os.h"
 
 #define GUI_MENUP1_CTRNUM 8
 
 using namespace gui;
 
-extern Window wn_cds;
-extern Window wn_transmode;
-extern Window wn_idcard;
-extern Window wn_manager_mode;
-extern Window wn_wifi_share;
-extern Window wn_namecard;
-extern Window wn_about;
-extern Window wn_fingerprint;
-extern Window wn_pin;
-extern osThreadId manager_taskHandle;
 extern void cb_backto_mainpage(Window& wn, Display& dis, ui_operation& opt);
 extern void cb_backto_gui_pin(Window& wn, Display& dis, ui_operation& opt);
 extern void cdc_acm_init();
 extern void usbd_deinit();
 
-void clickon_menup1_trans(Window& wn, Display& dis, ui_operation& opt);
-void clickon_menup1_idcard(Window& wn, Display& dis, ui_operation& opt);
-void clickon_menup1_fgmanage(Window& wn, Display& dis, ui_operation& opt);
-void clickon_wifi_share(Window& wn, Display& dis, ui_operation& opt);
-void clickon_namecard(Window& wn, Display& dis, ui_operation& opt);
-void clickon_about(Window& wn, Display& dis, ui_operation& opt);
-void clickon_menup1_managermode(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_menup1_trans(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_menup1_idcard(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_menup1_fgmanage(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_wifi_share(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_namecard(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_about(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_menup1_managermode(Window& wn, Display& dis, ui_operation& opt);
 void cb_backto_menup1(Window& wn, Display& dis, ui_operation& opt);
 
-extern void render_rectangle(Scheme& sche, Control& self, bool onSelect);
-
-Control controls_menu_page1[GUI_MENUP1_CTRNUM]
+static Control controls_menu_page1[GUI_MENUP1_CTRNUM]
 {
     // Home page
     {2, 2, 70, 60, true, cb_backto_mainpage, render_rectangle},
@@ -51,7 +44,7 @@ Control controls_menu_page1[GUI_MENUP1_CTRNUM]
     // Host
     {219, 62, 70, 60, true, clickon_menup1_managermode, render_rectangle},
 };
-ResourceDescriptor res_menu_page1
+static ResourceDescriptor res_menu_page1
 {
     .path = "gui_menu",
     .rx = 0,
@@ -123,7 +116,7 @@ void clickon_menup1_managermode(Window& wn, Display& dis, ui_operation& opt)
     cdc_acm_init();
     dis.switchFocusLag(&wn_manager_mode);
     dis.refresh_count = 0;
-    vTaskResume(manager_taskHandle);
+    core::StartIdealTask();
 }
 
 void cb_backto_menup1(Window& wn, Display& dis, ui_operation& opt)

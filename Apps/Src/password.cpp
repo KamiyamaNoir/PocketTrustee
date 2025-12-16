@@ -1,4 +1,4 @@
-#include "password.h"
+#include "password.hpp"
 #include "lfs_base.h"
 #include "zcbor_common.h"
 #include "zcbor_decode.h"

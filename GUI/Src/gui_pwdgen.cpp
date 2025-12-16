@@ -1,34 +1,33 @@
-#include "gui.h"
-#include "crypto_base.h"
+#include "gui_pwdgen.hpp"
+#include "gui_mainpage.hpp"
+#include "crypto_base.hpp"
 #include <cstring>
 #include <cstdio>
 #include "bsp_rtc.h"
 #include "zcbor_encode.h"
 #include "lfs_base.h"
-#include "password.h"
+#include "password.hpp"
 
 #define GUI_PWDGEN_CTRNUM 9
 #define GUI_PWDGEN_SAVED_CTRNUM 1
 
 using namespace gui;
 
-extern Window wn_cds;
 extern void hid_keyboard_string(const char* str);
 extern void usbd_deinit();
 
-void clickon_pwdgen_keylength(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwdgen_gen(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwdgen_send(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwdgen_config(Window& wn, Display& dis, ui_operation& opt, int args);
-void clickon_pwdgen_exit(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwdgen_save(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwdgen_saved_ok(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwdgen_keylength(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwdgen_gen(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwdgen_send(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwdgen_config(Window& wn, Display& dis, ui_operation& opt, int args);
+static void clickon_pwdgen_exit(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwdgen_save(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwdgen_saved_ok(Window& wn, Display& dis, ui_operation& opt);
 
-extern void render_rectangle(Scheme& sche, Control& self, bool onSelect);
-void render_pwdgen_keylength(Scheme& sche, Control& self, bool onSelect);
-void render_pwdgen_saved(Scheme& sche, Control& self, bool onSelect);
+static void render_pwdgen_keylength(Scheme& sche, Control& self, bool onSelect);
+static void render_pwdgen_saved(Scheme& sche, Control& self, bool onSelect);
 
-Control controls_pwdgen[GUI_PWDGEN_CTRNUM]
+static Control controls_pwdgen[GUI_PWDGEN_CTRNUM]
 {
     // Back to MENU
     {228, 2, 67, 21, true, clickon_pwdgen_exit, render_rectangle},
@@ -47,11 +46,11 @@ Control controls_pwdgen[GUI_PWDGEN_CTRNUM]
     {167, 99, 62, 26, true, clickon_pwdgen_send, render_rectangle},
     {230, 99, 62, 26, true, clickon_pwdgen_save, render_rectangle},
 };
-Control controls_pwdgen_saved[GUI_PWDGEN_SAVED_CTRNUM]
+static Control controls_pwdgen_saved[GUI_PWDGEN_SAVED_CTRNUM]
 {
     {115, 87, 67, 27, true, clickon_pwdgen_saved_ok, render_pwdgen_saved}
 };
-ResourceDescriptor res_pwdgen
+static ResourceDescriptor res_pwdgen
 {
     .path = "gui_pwd/pwdgen",
     .rx = 0,
@@ -59,7 +58,7 @@ ResourceDescriptor res_pwdgen
     .rw = GUI_WIDTH,
     .rh = GUI_HEIGHT,
 };
-ResourceDescriptor res_pwdgen_saved
+static ResourceDescriptor res_pwdgen_saved
 {
     .path = "gui_pwd/saved",
     .rx = 38,

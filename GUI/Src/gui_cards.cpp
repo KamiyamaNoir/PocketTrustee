@@ -1,5 +1,4 @@
-#include "gui.h"
-#include "gui_component_list.h"
+#include "gui_cards.hpp"
 
 #define GUI_WIFI_SHARE_CTRNUM 1
 #define GUI_WIFI_LIST_PAGESIZE 6

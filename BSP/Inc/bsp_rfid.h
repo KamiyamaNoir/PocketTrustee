@@ -3,7 +3,6 @@
 
 #include "bsp_core.h"
 #include <cstring>
-#include "lfs_base.h"
 
 #ifdef __cplusplus
 

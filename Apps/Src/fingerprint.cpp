@@ -1,4 +1,4 @@
-#include "fingerprint.h"
+#include "fingerprint.hpp"
 #include "bsp_finger.h"
 #include "cmsis_os.h"
 

@@ -1,6 +1,7 @@
 #include <cstring>
-#include "gui.h"
-#include "pin_code.h"
+#include "gui_lock.hpp"
+#include "pin_code.hpp"
+#include "gui_mainpage.hpp"
 
 #define GUI_LOCK_CTRNUM 0
 #define GUI_PIN_CTRNUM 1
@@ -11,7 +12,6 @@ using namespace gui;
 
 char gui_pin_input[6];
 static Window* target_window = nullptr;
-extern Window wn_cds;
 
 void cb_backto_gui_pin(Window& wn, Display& dis, ui_operation& opt);
 
@@ -21,7 +21,7 @@ static void render_pin(Scheme& sche, Control& self, bool onSelect);
 
 static uint8_t input_index = 0;
 
-ResourceDescriptor res_lock
+static ResourceDescriptor res_lock
 {
     .path = "gui_lock/locked",
     .rx = 0,
@@ -29,7 +29,7 @@ ResourceDescriptor res_lock
     .rw = GUI_WIDTH,
     .rh = GUI_HEIGHT,
 };
-ResourceDescriptor res_pin
+static ResourceDescriptor res_pin
 {
     .path = "gui_lock/pin",
     .rx = 0,
@@ -38,7 +38,7 @@ ResourceDescriptor res_pin
     .rh = GUI_HEIGHT,
 };
 
-Control controls_pin[GUI_PIN_CTRNUM]
+static Control controls_pin[GUI_PIN_CTRNUM]
 {
     {59, 48, 16, 32, true, clickon_pin_input, render_pin}
 };

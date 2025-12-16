@@ -1,4 +1,4 @@
-#include "crypto_base.h"
+#include "crypto_base.hpp"
 #include <cstring>
 #include "bsp_rtc.h"
 

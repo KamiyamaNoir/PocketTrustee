@@ -1,20 +1,19 @@
-#include "gui.h"
+#include "gui_transmode.hpp"
+#include "gui_menup1.hpp"
 #include "bsp_nfc.h"
 
 #define GUI_TRANSMODE_CTRNUM 1
 
 using namespace gui;
 
-extern Window wn_menu_page1;
+static void clickon_trans_exit(Window& wn, Display& dis, ui_operation& opt);
 
-void clickon_trans_exit(Window& wn, Display& dis, ui_operation& opt);
-
-Control controls_transmode[GUI_TRANSMODE_CTRNUM]
+static Control controls_transmode[GUI_TRANSMODE_CTRNUM]
 {
     {0, 0, 1, 1, false, clickon_trans_exit, nullptr}
 };
 
-ResourceDescriptor res_trsmode
+static ResourceDescriptor res_trsmode
 {
     .path = "gui_trans/trans",
     .rx = 0,

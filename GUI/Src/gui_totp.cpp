@@ -1,6 +1,7 @@
-#include "gui.h"
+#include "gui_totp.hpp"
+#include "gui_mainpage.hpp"
 #include "gui_resource.h"
-#include "otp.h"
+#include "otp.hpp"
 #include <cstring>
 #include "lfs_base.h"
 #include "gui_component_list.h"
@@ -13,25 +14,23 @@
 
 using namespace gui;
 
-extern Window wn_cds;
+static void clickon_totp_sel_exit(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_totp_sel(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_totp_exit(Window& wn, Display& dis, ui_operation& opt);
 
-void clickon_totp_sel_exit(Window& wn, Display& dis, ui_operation& opt);
-void clickon_totp_sel(Window& wn, Display& dis, ui_operation& opt);
-void clickon_totp_exit(Window& wn, Display& dis, ui_operation& opt);
+static void render_totp_sel(Scheme& sche, Control& self, bool onSelect);
+static void render_totp(Scheme& sche, Control& self, bool onSelect);
 
-void render_totp_sel(Scheme& sche, Control& self, bool onSelect);
-void render_totp(Scheme& sche, Control& self, bool onSelect);
-
-Control controls_totp_sel[GUI_TOTP_SEL_CTRNUM]
+static Control controls_totp_sel[GUI_TOTP_SEL_CTRNUM]
 {
     {229, 1, 64, 24, true, clickon_totp_sel_exit, render_totp_sel},
     {0, 0, 1, 1, true, clickon_totp_sel, nullptr}
 };
-Control controls_totp[GUI_TOTP_CTRNUM]
+static Control controls_totp[GUI_TOTP_CTRNUM]
 {
     {229, 1, 64, 24, true, clickon_totp_exit, render_totp}
 };
-ResourceDescriptor res_totp_sel
+static ResourceDescriptor res_totp_sel
 {
     .path = nullptr,
     .rx = 0,
@@ -39,7 +38,7 @@ ResourceDescriptor res_totp_sel
     .rw = GUI_WIDTH,
     .rh = GUI_HEIGHT,
 };
-ResourceDescriptor res_totp
+static ResourceDescriptor res_totp
 {
     .path = nullptr,
     .rx = 0,

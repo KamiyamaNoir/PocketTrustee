@@ -1,10 +1,11 @@
-#include "gui.h"
+#include "gui_pwdfill.hpp"
 #include "gui_resource.h"
 #include "lfs_base.h"
 #include <cstdio>
 // #include "fingerprint.h"
 #include "gui_component_list.h"
-#include "password.h"
+#include "password.hpp"
+#include "gui_mainpage.hpp"
 
 #define GUI_PWDLIST_CTRNUM 7
 #define GUI_PWDFILL_FAIL_CTRNUM 1
@@ -13,30 +14,26 @@
 
 using namespace gui;
 
-extern osThreadId defaultTaskHandle;
-
 ComponentList<PWD_LIST_PAGE_SIZE, PasswordFile::PWD_NAME_MAX> pwd_list(PasswordFile::pwd_dir, PasswordFile::pwd_suffix);
 static PasswordFile current_pwd;
 static volatile bool in_select_mode = false;
 
-extern Window wn_cds;
-extern void render_rectangle(Scheme& sche, Control& self, bool onSelect);
 extern void hid_keyboard_string(const char* str);
 extern void usbd_deinit();
 
 void pwd_dir_update();
 
-void clickon_pwd_exit(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwd_pageup(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwd_pagedown(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwd_list(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwd_account(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwd_key(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwd_delete(Window& wn, Display& dis, ui_operation& opt);
-void clickon_pwd_fail(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwd_exit(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwd_pageup(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwd_pagedown(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwd_list(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwd_account(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwd_key(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwd_delete(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_pwd_fail(Window& wn, Display& dis, ui_operation& opt);
 
-void render_pwd_list(Scheme& sche, Control& self, bool onSelect);
-void render_pwd_select(Scheme& sche, Control& self, bool onSelect);
+static void render_pwd_list(Scheme& sche, Control& self, bool onSelect);
+static void render_pwd_select(Scheme& sche, Control& self, bool onSelect);
 
 
 ResourceDescriptor res_pwd_list

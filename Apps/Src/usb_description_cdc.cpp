@@ -1,5 +1,5 @@
 #include "bsp_nfc.h"
-#include "simple_buffer.h"
+#include "simple_buffer.hpp"
 #include "usbd_core.h"
 #include "usbd_cdc_acm.h"
 

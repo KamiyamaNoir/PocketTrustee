@@ -1,7 +1,7 @@
 #ifndef FINGERPRINT_H
 #define FINGERPRINT_H
 
-#include "gui.h"
+#include "gui.hpp"
 
 enum FingerprintResult
 {

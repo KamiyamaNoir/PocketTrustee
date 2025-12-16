@@ -1,4 +1,4 @@
-#include "gui.h"
+#include "gui.hpp"
 #include "bsp_epaper.h"
 #include <cstring>
 #include "gui_resource.h"
@@ -8,8 +8,6 @@
 using namespace gui;
 
 /* =============USER CODE BEGIN GUI_RESOURCE================= */
-// GRAPHIC_RAM_AREA uint8_t gram_cache[GUI_ARRAY];
-// GRAPHIC_RAM_AREA uint8_t gram_end[GUI_ARRAY];
 static uint8_t gram_cache[GUI_ARRAY];
 static uint8_t gram_end[GUI_ARRAY];
 

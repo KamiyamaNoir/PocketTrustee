@@ -1,26 +1,22 @@
+#include "gui_fingerprint.hpp"
+#include "gui_menup1.hpp"
 #include "bsp_finger.h"
-#include "gui.h"
-#include "fingerprint.h"
+#include "fingerprint.hpp"
 
 #define GUI_FINGERPRINT_CTRNUM 4
 #define GUI_FG_AUTHEN_CTRNUM 1
 
 using namespace gui;
 
-extern Window wn_menu_page1;
-extern osThreadId defaultTaskHandle;
 
-
-void clickon_fingerprint_exit(Window& wn, Display& dis, ui_operation& opt);
-void clickon_fgauthen_cancel(Window& wn, Display& dis, ui_operation& opt);
-void clickon_fgmanage_enroll(Window& wn, Display& dis, ui_operation& opt);
-void clickon_fgmanage_test(Window& wn, Display& dis, ui_operation& opt);
-void clickon_fgmanage_del(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_fingerprint_exit(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_fgauthen_cancel(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_fgmanage_enroll(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_fgmanage_test(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_fgmanage_del(Window& wn, Display& dis, ui_operation& opt);
 extern void cb_backto_menup1(Window& wn, Display& dis, ui_operation& opt);
 
-extern void render_rectangle(Scheme& sche, Control& self, bool onSelect);
-
-Control controls_fingerprint[GUI_FINGERPRINT_CTRNUM]
+static Control controls_fingerprint[GUI_FINGERPRINT_CTRNUM]
 {
     {228, 4, 63, 19, true, cb_backto_menup1, render_rectangle},
     {30, 94, 60, 23, true, clickon_fgmanage_enroll, render_rectangle},
@@ -28,12 +24,12 @@ Control controls_fingerprint[GUI_FINGERPRINT_CTRNUM]
     {192, 94, 60, 23, true, clickon_fgmanage_del, render_rectangle},
 
 };
-Control controls_fg_authen[GUI_FG_AUTHEN_CTRNUM]
+static Control controls_fg_authen[GUI_FG_AUTHEN_CTRNUM]
 {
     {115, 87, 67, 27, true, clickon_fgauthen_cancel, render_rectangle}
 };
 
-ResourceDescriptor res_fingerprint
+static ResourceDescriptor res_fingerprint
 {
     .path = "gui_fg/fgmn",
     .rx = 0,
@@ -41,7 +37,7 @@ ResourceDescriptor res_fingerprint
     .rw = GUI_WIDTH,
     .rh = GUI_HEIGHT,
 };
-ResourceDescriptor res_fg_authen
+static ResourceDescriptor res_fg_authen
 {
     .path = "gui_fg/authen",
     .rx = 38,
@@ -49,7 +45,7 @@ ResourceDescriptor res_fg_authen
     .rw = 220,
     .rh = 112,
 };
-ResourceDescriptor res_fg_pass
+static ResourceDescriptor res_fg_pass
 {
     .path = "gui_fg/pass",
     .rx = 38,
@@ -57,7 +53,7 @@ ResourceDescriptor res_fg_pass
     .rw = 220,
     .rh = 112,
 };
-ResourceDescriptor res_fg_fail
+static ResourceDescriptor res_fg_fail
 {
     .path = "gui_fg/fail",
     .rx = 38,

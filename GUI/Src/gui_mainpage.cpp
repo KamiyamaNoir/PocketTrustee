@@ -1,15 +1,16 @@
 #include "bsp_adc.h"
-#include "gui.h"
+#include "gui_mainpage.hpp"
 #include "bsp_nfc.h"
 #include "gui_resource.h"
+#include <cstdio>
 #include "lfs_base.h"
 
 #define GUI_MAINPAGE_CTRNUM 10
 #define GUI_ICCARD_CTRNUM 4
 
 using namespace gui;
+using nfc::nfc_current_route;
 
-extern nfc::NFC_Route nfc_current_route;
 extern void cb_backto_menup1(Window& wn, Display& dis, ui_operation& opt);
 extern Window wn_pwdgen;
 extern Window wn_pwd_list;
@@ -21,23 +22,22 @@ extern Window wn_transmode;
 extern osThreadId manager_taskHandle;
 extern void cdc_acm_init();
 
-void clickon_cds_ic(Window& wn, Display& dis, ui_operation& opt);
-void clickon_cds_id(Window& wn, Display& dis, ui_operation& opt);
-void clickon_cds_pwdgen(Window& wn, Display& dis, ui_operation& opt);
-void clickon_cds_pwdfill(Window& wn, Display& dis, ui_operation& opt);
-void clickon_cds_totp(Window& wn, Display& dis, ui_operation& opt);
-void clickon_cds_cards(Window& wn, Display& dis, ui_operation& opt);
-void clickon_cds_transparent(Window& wn, Display& dis, ui_operation& opt);
-void clickon_cds_host(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_cds_ic(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_cds_id(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_cds_pwdgen(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_cds_pwdfill(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_cds_totp(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_cds_cards(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_cds_transparent(Window& wn, Display& dis, ui_operation& opt);
+static void clickon_cds_host(Window& wn, Display& dis, ui_operation& opt);
 
-void clickon_boxcard(Window& wn, Display& dis, ui_operation& opt, int args);
+static void clickon_boxcard(Window& wn, Display& dis, ui_operation& opt, int args);
 void cb_backto_mainpage(Window& wn, Display& dis, ui_operation& opt);
 
-extern void render_rectangle(Scheme& sche, Control& self, bool onSelect);
-void render_cds_texture(Scheme& sche, Control& self, bool onSelect, int args);
-void render_cds_icon(Scheme& sche, Control& self, bool onSelect);
+static void render_cds_texture(Scheme& sche, Control& self, bool onSelect, int args);
+static void render_cds_icon(Scheme& sche, Control& self, bool onSelect);
 
-Control controls_card_selection[GUI_MAINPAGE_CTRNUM]
+static Control controls_card_selection[GUI_MAINPAGE_CTRNUM]
 {
     // Quick Tools
     {7, 23, 100,23, true, clickon_cds_pwdgen, render_rectangle},
@@ -54,7 +54,7 @@ Control controls_card_selection[GUI_MAINPAGE_CTRNUM]
     // Icon
     {0, 0, 1, 1, false, nullptr, render_cds_icon},
 };
-Control controls_cds_msgbox[GUI_ICCARD_CTRNUM]
+static Control controls_cds_msgbox[GUI_ICCARD_CTRNUM]
 {
     // Selection
     {48, 37, 92, 32, true, [](Window& wn, Display& dis, ui_operation& opt) -> void {clickon_boxcard(wn, dis, opt, 1);}, [](Scheme& a, Control& b, bool c) -> void {render_cds_texture(a, b, c, 1);}},
@@ -62,7 +62,7 @@ Control controls_cds_msgbox[GUI_ICCARD_CTRNUM]
     {48, 79, 92, 32, true, [](Window& wn,  Display& dis, ui_operation& opt) -> void {clickon_boxcard(wn, dis, opt, 3);}, [](Scheme& a, Control& b, bool c) -> void {render_cds_texture(a, b, c, 3);}},
     {158, 79, 92, 32, true, [](Window& wn,  Display& dis, ui_operation& opt) -> void {clickon_boxcard(wn, dis, opt, 4);}, [](Scheme& a, Control& b, bool c) -> void {render_cds_texture(a, b, c, 4);}},
 };
-ResourceDescriptor res_cds
+static ResourceDescriptor res_cds
 {
     .path = "gui_main/main",
     .rx = 0,
@@ -70,7 +70,7 @@ ResourceDescriptor res_cds
     .rw = GUI_WIDTH,
     .rh = GUI_HEIGHT,
 };
-ResourceDescriptor res_cds_msgbox
+static ResourceDescriptor res_cds_msgbox
 {
     .path = "gui_main/iccard",
     .rx = 38,

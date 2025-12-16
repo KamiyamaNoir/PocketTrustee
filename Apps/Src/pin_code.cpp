@@ -1,4 +1,4 @@
-#include "pin_code.h"
+#include "pin_code.hpp"
 
 static char pin_code[6] {};
 

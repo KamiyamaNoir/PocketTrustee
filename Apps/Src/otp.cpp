@@ -1,7 +1,7 @@
-#include "otp.h"
+#include "otp.hpp"
 #include <cstring>
 #include "aes.h"
-#include "crypto_base.h"
+#include "crypto_base.hpp"
 #include "lfs_base.h"
 #include "zcbor_common.h"
 #include "zcbor_decode.h"

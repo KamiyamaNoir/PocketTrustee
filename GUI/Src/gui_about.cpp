@@ -1,19 +1,18 @@
-#include "gui.h"
+#include "gui_about.hpp"
+#include "gui_menup1.hpp"
 
 #define GUI_ABOUT_CTRNUM 1
 
 using namespace gui;
 
-extern Window wn_menu_page1;
+static void clickon_about_exit(Window& wn, Display& dis, ui_operation& opt);
 
-void clickon_about_exit(Window& wn, Display& dis, ui_operation& opt);
-
-Control controls_about[GUI_ABOUT_CTRNUM]
+static Control controls_about[GUI_ABOUT_CTRNUM]
 {
     {0, 0, 1, 1, false, clickon_about_exit, nullptr}
 };
 
-ResourceDescriptor res_about
+static ResourceDescriptor res_about
 {
     .path = "device.info",
     .rx = 0,

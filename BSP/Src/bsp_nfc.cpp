@@ -1,6 +1,6 @@
 #include "bsp_nfc.h"
 #include "bsp_pn532.h"
-#include "simple_buffer.h"
+#include "simple_buffer.hpp"
 #include "usart.h"
 
 nfc::NFC_Route nfc_current_route = nfc::ROUTE_NONE;
