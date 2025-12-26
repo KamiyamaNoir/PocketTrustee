@@ -8,15 +8,16 @@
 #include "gui.hpp"
 #include "host.hpp"
 #include "usart.h"
+#include "little_fs.hpp"
 
 extern gui::Display gui_main;
 
 extern void cdc_acm_init();
+extern void hid_keyboard_init();
 extern void usbd_deinit();
-extern volatile bool in_managermode;
+extern void hid_keyboard_string(const char* str);
 extern void fingerprint_uart_callback(uint16_t size);
 
-extern osThreadId defaultTaskHandle;
 extern osThreadId manager_taskHandle;
 extern osThreadId ADCSampleTaskHandle;
 extern osThreadId IdealTaskHandle;
@@ -35,18 +36,14 @@ void sys_startup()
     rfid::set_drive_mode(rfid::STOP);
     cmox_init_arg_t init_target = {CMOX_INIT_TARGET_L4, nullptr};
     cmox_initialize(&init_target);
-    LittleFS::init();
+    LittleFS_W25Q16::Mount();
 #ifndef DEBUG_ENABLE
-    cdc_acm_init();
-    in_managermode = true;
     for (;;)
     {
-        auto err = hostCommandInvoke(true);
-        if (err == 2)
+        auto err = Host::hostCommandInvoke(true);
+        if (err.err == 0 && err.err_fs == 1)
             break;
     }
-    in_managermode = false;
-    usbd_deinit();
 #endif
     // HAL_UARTEx_ReceiveToIdle_IT(&huart1, uart_buffer, sizeof(uart_buffer));
     fingerprint_uart_callback(0);
@@ -62,6 +59,36 @@ void core::StopIdealTask()
     vTaskSuspend(IdealTaskHandle);
 }
 
+void core::StartManagerTask()
+{
+    vTaskResume(manager_taskHandle);
+}
+
+void core::StopManagerTask()
+{
+    vTaskSuspend(manager_taskHandle);
+}
+
+void core::RegisterACMDevice()
+{
+    cdc_acm_init();
+}
+
+void core::RegisterHIDDevice()
+{
+    hid_keyboard_init();
+}
+
+void core::USB_HID_Send(const char* content)
+{
+    hid_keyboard_string(content);
+}
+
+void core::DeinitUSB()
+{
+    usbd_deinit();
+}
+
 void StartDefaultTask(void const * argument)
 {
     sys_startup();
@@ -72,10 +99,7 @@ void StartManagerTask(void const * argument)
 {
     for (;;)
     {
-        if (in_managermode)
-        {
-            hostCommandInvoke();
-        }
+        Host::hostCommandInvoke();
         osDelay(1);
     }
 }

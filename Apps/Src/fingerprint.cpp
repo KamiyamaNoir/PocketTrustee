@@ -1,11 +1,6 @@
 #include "fingerprint.hpp"
 #include "bsp_finger.h"
-#include "cmsis_os.h"
-
-extern osThreadId defaultTaskHandle;
-extern gui::Window wn_fg_authen;
-extern gui::Window wn_fg_pass;
-extern gui::Window wn_fg_fail;
+#include "gui_fingerprint.hpp"
 
 static FingerprintResult PollAuthencation();
 static FingerprintResult PollEnroll();

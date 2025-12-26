@@ -6,6 +6,8 @@
 
 #ifdef __cplusplus
 
+#include "little_fs.hpp"
+
 namespace rfid
 {
     enum DriveMode
@@ -23,7 +25,7 @@ namespace rfid
 
         int load(const char* name)
         {
-            if (strlen(name) > IDCARD_NAME_MAX)
+            if (name == nullptr || strlen(name) > IDCARD_NAME_MAX)
             {
                 return -1;
             }
@@ -33,16 +35,25 @@ namespace rfid
             strcat(path, name);
             strcat(path, idcard_suffix);
 
-            auto fs = LittleFS::fs_file_handler(path);
-            int err = fs.read(reinterpret_cast<uint8_t*>(this), sizeof(IDCard));
+            FileDelegate file;
+
+            uint8_t file_buffer[128];
+            lfs_file_config open_cfg = {
+                .buffer = file_buffer,
+            };
+            int err = file.open(path, LFS_O_RDONLY, &open_cfg);
+            if (err < 0) return err;
+
+            err = lfs_file_read(&fs_w25q16, &file.instance, this, sizeof(*this));
             if (err < 0)
                 return err;
+
             return 0;
         }
 
         int save(const char* name)
         {
-            if (strlen(name) > IDCARD_NAME_MAX)
+            if (name == nullptr || strlen(name) > IDCARD_NAME_MAX)
             {
                 return -1;
             }
@@ -52,11 +63,19 @@ namespace rfid
             strcat(path, name);
             strcat(path, idcard_suffix);
 
-            auto fs = LittleFS::fs_file_handler(path);
-            fs.seek(0);
-            int err = fs.write(reinterpret_cast<uint8_t*>(this), sizeof(IDCard));
+            FileDelegate file;
+
+            uint8_t file_buffer[128];
+            lfs_file_config open_cfg = {
+                .buffer = file_buffer,
+            };
+            int err = file.open(path, LFS_O_RDWR | LFS_O_CREAT, &open_cfg);
+            if (err < 0) return err;
+
+            err = lfs_file_write(&fs_w25q16, &file.instance, this, sizeof(*this));
             if (err < 0)
                 return err;
+
             return 0;
         }
 

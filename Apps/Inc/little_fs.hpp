@@ -69,4 +69,77 @@ public:
     }
 };
 
+class FileDelegate
+{
+public:
+    ~FileDelegate()
+    {
+        if (_opened)
+            lfs_file_close(&fs_w25q16, &instance);
+    }
+
+    int open(const char* path, int flags, const lfs_file_config* config)
+    {
+        int err = lfs_file_opencfg(&fs_w25q16, &instance, path, flags, config);
+        if (err >= 0)
+            _opened = true;
+        return err;
+    }
+
+    lfs_file_t instance;
+private:
+    bool _opened = false;
+};
+
+class DirectoryDelegate
+{
+public:
+    ~DirectoryDelegate()
+    {
+        if (_opened)
+            lfs_dir_close(&fs_w25q16, &instance);
+    }
+
+    int open(const char* path)
+    {
+        int err = lfs_dir_open(&fs_w25q16, &instance, path);
+        if (err >= 0)
+            _opened = true;
+        return err;
+    }
+
+    int count()
+    {
+        uint32_t current = lfs_dir_tell(&fs_w25q16, &instance);
+        lfs_dir_rewind(&fs_w25q16, &instance);
+        lfs_info info {};
+        int count = 0;
+        for (;;)
+        {
+            int err = lfs_dir_read(&fs_w25q16, &instance, &info);
+            if (err > 0)
+                count++;
+            else if (err == 0)
+            {
+                lfs_dir_seek(&fs_w25q16, &instance, current);
+                return ++count;
+            }
+            else
+            {
+                lfs_dir_seek(&fs_w25q16, &instance, current);
+                return err;
+            }
+        }
+    }
+
+    int rewind()
+    {
+        return lfs_dir_rewind(&fs_w25q16, &instance);
+    }
+
+    lfs_dir_t instance;
+private:
+    bool _opened = false;
+};
+
 #endif

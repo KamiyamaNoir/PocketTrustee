@@ -6,7 +6,7 @@
 #include <cstdio>
 #include "cmsis_os.h"
 #include "gui_resource.h"
-#include "lfs_base.h"
+#include "little_fs.hpp"
 #include "bsp_rtc.h"
 #include "gui_component_list.h"
 
@@ -112,7 +112,6 @@ void idcard_dir_update()
     idcard_list.update();
 }
 
-extern osThreadId defaultTaskHandle;
 static IDCard idcard_idcard {};
 volatile bool idcard_onwaiting = false;
 

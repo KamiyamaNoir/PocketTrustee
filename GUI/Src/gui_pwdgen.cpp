@@ -5,16 +5,13 @@
 #include <cstdio>
 #include "bsp_rtc.h"
 #include "zcbor_encode.h"
-#include "lfs_base.h"
+#include "little_fs.hpp"
 #include "password.hpp"
 
 #define GUI_PWDGEN_CTRNUM 9
 #define GUI_PWDGEN_SAVED_CTRNUM 1
 
 using namespace gui;
-
-extern void hid_keyboard_string(const char* str);
-extern void usbd_deinit();
 
 static void clickon_pwdgen_keylength(Window& wn, Display& dis, ui_operation& opt);
 static void clickon_pwdgen_gen(Window& wn, Display& dis, ui_operation& opt);
@@ -157,14 +154,14 @@ void clickon_pwdgen_gen(Window& wn, Display& dis, ui_operation& opt)
 void clickon_pwdgen_send(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    hid_keyboard_string(pwdgen_pwd);
+    core::USB_HID_Send(pwdgen_pwd);
 }
 
 void clickon_pwdgen_exit(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
     pwdgen_pwd[0] = '\0';
-    usbd_deinit();
+    core::DeinitUSB();
     dis.switchFocusLag(&wn_cds);
     dis.refresh_count = 0;
 }

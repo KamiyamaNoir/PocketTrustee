@@ -1,26 +1,21 @@
 #include "bsp_adc.h"
 #include "gui_mainpage.hpp"
+#include "gui_menup1.hpp"
 #include "bsp_nfc.h"
 #include "gui_resource.h"
+#include "gui_idcard.hpp"
+#include "gui_pwdgen.hpp"
+#include "gui_pwdfill.hpp"
+#include "gui_totp.hpp"
+#include "gui_transmode.hpp"
+#include "gui_manager_mode.hpp"
+#include "gui_cards.hpp"
 #include <cstdio>
-#include "lfs_base.h"
 
 #define GUI_MAINPAGE_CTRNUM 10
 #define GUI_ICCARD_CTRNUM 4
 
 using namespace gui;
-using nfc::nfc_current_route;
-
-extern void cb_backto_menup1(Window& wn, Display& dis, ui_operation& opt);
-extern Window wn_pwdgen;
-extern Window wn_pwd_list;
-extern Window wn_idcard_select;
-extern Window wn_totp_sel;
-extern Window wn_manager_mode;
-extern Window wn_wifi_share;
-extern Window wn_transmode;
-extern osThreadId manager_taskHandle;
-extern void cdc_acm_init();
 
 static void clickon_cds_ic(Window& wn, Display& dis, ui_operation& opt);
 static void clickon_cds_id(Window& wn, Display& dis, ui_operation& opt);
@@ -30,9 +25,7 @@ static void clickon_cds_totp(Window& wn, Display& dis, ui_operation& opt);
 static void clickon_cds_cards(Window& wn, Display& dis, ui_operation& opt);
 static void clickon_cds_transparent(Window& wn, Display& dis, ui_operation& opt);
 static void clickon_cds_host(Window& wn, Display& dis, ui_operation& opt);
-
 static void clickon_boxcard(Window& wn, Display& dis, ui_operation& opt, int args);
-void cb_backto_mainpage(Window& wn, Display& dis, ui_operation& opt);
 
 static void render_cds_texture(Scheme& sche, Control& self, bool onSelect, int args);
 static void render_cds_icon(Scheme& sche, Control& self, bool onSelect);
@@ -102,8 +95,7 @@ void clickon_cds_id(Window& wn, Display& dis, ui_operation& opt)
 void clickon_boxcard(Window& wn, Display& dis, ui_operation& opt, int args)
 {
     if (opt != OP_ENTER) return;
-    nfc_current_route = static_cast<nfc::NFC_Route>(args);
-    nfc::set_route();
+    nfc::set_route(static_cast<nfc::NFC_Route>(args));
     dis.switchFocusLag(&wn_cds);
     dis.refresh_count = 0;
 }
@@ -115,22 +107,18 @@ void cb_backto_mainpage(Window& wn, Display& dis, ui_operation& opt)
     dis.refresh_count = 0;
 }
 
-extern void hid_keyboard_init();
-
 void clickon_cds_pwdgen(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    hid_keyboard_init();
+    core::RegisterHIDDevice();
     dis.switchFocusLag(&wn_pwdgen);
     dis.refresh_count = 0;
 }
 
-extern void pwd_dir_update();
-
 void clickon_cds_pwdfill(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    hid_keyboard_init();
+    core::RegisterHIDDevice();
     pwd_dir_update();
     dis.switchFocusLag(&wn_pwd_list);
     dis.refresh_count = 0;
@@ -146,13 +134,11 @@ void clickon_cds_totp(Window& wn, Display& dis, ui_operation& opt)
     dis.refresh_count = 0;
 }
 
-extern void wifi_card_update();
-
 void clickon_cds_cards(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    wifi_card_update();
-    dis.switchFocusLag(&wn_wifi_share);
+    wn_cards_update();
+    dis.switchFocusLag(&wn_cards);
     dis.refresh_count = 0;
 }
 
@@ -164,16 +150,13 @@ void clickon_cds_transparent(Window& wn, Display& dis, ui_operation& opt)
     dis.refresh_count = 0;
 }
 
-extern bool in_managermode;
-
 void clickon_cds_host(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    in_managermode = true;
-    cdc_acm_init();
+    core::RegisterACMDevice();
     dis.switchFocusLag(&wn_manager_mode);
     dis.refresh_count = 0;
-    vTaskResume(manager_taskHandle);
+    core::StartManagerTask();
 }
 
 void render_cds_texture(Scheme& sche, Control& self, bool onSelect, int args)
@@ -181,7 +164,7 @@ void render_cds_texture(Scheme& sche, Control& self, bool onSelect, int args)
     render_rectangle(sche, self, onSelect);
     uint16_t off = 0;
     if (args == -1)
-        off = 192*nfc_current_route;
+        off = 192*nfc::get_route();
     else
         off = 192*args;
     sche.texture(&texture_icmode[off], self.x+self.w/2-32, self.y+self.h/2-12, 64, 24);

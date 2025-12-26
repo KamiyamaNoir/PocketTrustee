@@ -3,7 +3,7 @@
 #include "gui_resource.h"
 #include "otp.hpp"
 #include <cstring>
-#include "lfs_base.h"
+#include "little_fs.hpp"
 #include "gui_component_list.h"
 
 #define GUI_TOTP_SEL_CTRNUM 2
@@ -120,10 +120,16 @@ void render_totp(Scheme& sche, Control& self, bool onSelect)
     sche.clear()
         .texture(icon_bk_menu, self.x, self.y, self.w, self.h)
         .put_string(2, 2, ASCII_3216, "TOTP");
-    auto totp = OTP_TOTP(totp_list.seek(totp_list.on_select()));
-    uint8_t off =  GUI_WIDTH/2 - 4*strlen(totp.getName());
+
+    OTP_TOTP totp;
+
+    auto err = totp.load(totp_list.seek(totp_list.on_select()));
+
+    if (err.err != 0) return;
+
+    uint8_t off =  GUI_WIDTH/2 - 4*strlen(totp.name);
     sche.rectangle(68, 93, 160, 2)
-        .put_string(off, 36, ASCII_1608, totp.getName());
+        .put_string(off, 36, ASCII_1608, totp.name);
     uint32_t calculate = 0;
     int result = totp.calculate(&calculate);
     if (result == 0)

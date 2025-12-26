@@ -1,5 +1,4 @@
 #include "bsp_core.h"
-#include "cmsis_os.h"
 #include "main.h"
 #include "usbd_core.h"
 #include "usbd_hid.h"

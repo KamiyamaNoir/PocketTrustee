@@ -3,12 +3,19 @@
 
 #include "main.h"
 
+struct PKT_ERR
+{
+    int err;
+    int err_fs;
+    const char* msg;
+};
+
 #ifdef __cplusplus
 // < CPP FILE >
 
 constexpr uint8_t version_c1 = 1;
-constexpr uint8_t version_c2 = 0;
-constexpr uint8_t version_c3 = 4;
+constexpr uint8_t version_c2 = 1;
+constexpr uint8_t version_c3 = 0;
 
 enum BSP_Status
 {
@@ -28,6 +35,15 @@ namespace core
 
     void StartIdealTask();
     void StopIdealTask();
+
+    void StartManagerTask();
+    void StopManagerTask();
+
+    void RegisterACMDevice();
+    void RegisterHIDDevice();
+    void USB_HID_Send(const char* content);
+    void DeinitUSB();
+
 }
 
 #endif

@@ -2,63 +2,117 @@
 #include <cstring>
 #include "aes.h"
 #include "crypto_base.hpp"
-#include "lfs_base.h"
+#include "little_fs.hpp"
 #include "zcbor_common.h"
 #include "zcbor_decode.h"
 
-#define TOTP_FILE_SIZE 128
-
-OTP_TOTP::OTP_TOTP(const char* totp_name) :
-name{}, key{}
+PKT_ERR OTP_TOTP::load(const char* totp_name)
 {
-    uint8_t cache[TOTP_FILE_SIZE];
-    uint8_t plaintext[TOTP_FILE_SIZE];
-    char path[TOTP_NAME_MAX + sizeof(totp_dir_base) + sizeof(totp_suffix)];
+    uint8_t file_buffer[TOTP_FILE_SIZE_MAX];
+    uint8_t cache[TOTP_FILE_SIZE_MAX];
+    uint8_t plaintext[TOTP_FILE_SIZE_MAX];
+    char path[TOTP_NAME_MAX + sizeof(totp_dir_base) + sizeof(totp_suffix)] {};
 
-    path[0] = '\0';
+    if (totp_name == nullptr || totp_name[0] == '\0')
+        return {
+            .err = -1,
+            .err_fs = LFS_ERR_INVAL,
+            .msg = "Null pointer to path"
+        };
+
+    if (strlen(totp_name) > TOTP_NAME_MAX)
+    {
+        return {
+            .err = -1,
+            .err_fs = LFS_ERR_OK,
+            .msg = "totp name too long"
+        };
+    }
+
     strcat(path, totp_dir_base);
     strcpy(this->name, totp_name);
     strcat(path, totp_name);
     strcat(path, totp_suffix);
 
-    auto fs = LittleFS::fs_file_handler(path);
-    int err = fs.read(cache, sizeof(cache));
-    if (err <= 0)
-    {
-        return;
-    }
+    lfs_file_config open_cfg = {
+        .buffer = file_buffer,
+    };
+    FileDelegate file;
+    int err = file.open(path, LFS_O_RDONLY, &open_cfg);
+    if (err < 0)
+        return {
+            .err = -1,
+            .err_fs = err,
+            .msg = "Totp fail to open file"
+        };
 
-    auto status = HAL_CRYP_AESECB_Decrypt(&hcryp, cache, sizeof(cache), plaintext, 1000);
+    err = lfs_file_read(&fs_w25q16, &file.instance, cache, TOTP_FILE_SIZE_MAX);
+    if (err < 0)
+        return {
+            .err = -1,
+            .err_fs = err,
+            .msg = "Totp fail to read file"
+        };
+    if (err == TOTP_FILE_SIZE_MAX)
+        return {
+            .err = -1,
+            .err_fs = LFS_ERR_OK,
+            .msg = "Bad totp file"
+        };
+
+    auto status = HAL_CRYP_AESECB_Decrypt(&hcryp, cache, err, plaintext, 1000);
     if (status != HAL_OK)
     {
-        return;
+        return {
+            .err = -1,
+            .err_fs = LFS_ERR_OK,
+            .msg = "Totp fail to decrypt file"
+        };
     }
 
-    //NOLINTNEXTLINE
-    zcbor_string zcbor_str;
+    zcbor_string zcbor_str = {
+        .value = nullptr,
+        .len = 0,
+    };
     uint32_t t;
     ZCBOR_STATE_D(zcbor_state, 2, plaintext, sizeof(plaintext), 1, 0);
-    zcbor_list_start_decode(zcbor_state);
-    zcbor_bstr_decode(zcbor_state, &zcbor_str);
+    bool success = zcbor_list_start_decode(zcbor_state);
+    success = success && zcbor_bstr_decode(zcbor_state, &zcbor_str);
+
+    if (!success || zcbor_str.len > 20)
+        return {
+            .err = -1,
+            .err_fs = LFS_ERR_OK,
+            .msg = "Bad totp file"
+        };
+
     memcpy(this->key, zcbor_str.value, zcbor_str.len);
     this->key_length = zcbor_str.len;
-    zcbor_uint32_decode(zcbor_state, &t);
+
+    success = zcbor_uint32_decode(zcbor_state, &t);
     this->step = t;
-    zcbor_uint32_decode(zcbor_state, &t);
+    success = success && zcbor_uint32_decode(zcbor_state, &t);
     this->otp_len = t;
+
+    if (!success)
+        return {
+            .err = -1,
+            .err_fs = LFS_ERR_OK,
+            .msg = "Bad totp file"
+        };
+    return {
+        .err = 0,
+        .err_fs = LFS_ERR_OK,
+        .msg = nullptr
+    };
 }
 
-OTP_TOTP::OTP_TOTP(const char* name, const uint8_t* key, uint8_t key_length) :
-name{}, key{}, key_length(key_length)
-{
-    strcpy(this->name, name);
-    memcpy(this->key, key, key_length);
-}
-
-const char* OTP_TOTP::getName() const
-{
-    return this->name;
-}
+// OTP_TOTP::OTP_TOTP(const char* name, const uint8_t* key, uint8_t key_length) :
+// name{}, key{}, key_length(key_length)
+// {
+//     strcpy(this->name, name);
+//     memcpy(this->key, key, key_length);
+// }
 
 // In fact, there are no situations where device need to new a totp itself
 /*

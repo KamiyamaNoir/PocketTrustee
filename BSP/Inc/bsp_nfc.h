@@ -17,13 +17,12 @@ namespace nfc
         ROUTE_PN532 = 5
     };
 
-    void set_route();
+    void set_route(NFC_Route route);
+    NFC_Route get_route();
     void enable_transparent_mode();
     void disable_transparent_mode();
     void transparent_send_cb();
     void transparent_recv_cb(uint16_t size);
-
-    extern NFC_Route nfc_current_route;
 }
 
 #endif

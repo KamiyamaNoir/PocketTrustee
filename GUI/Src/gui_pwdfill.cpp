@@ -1,6 +1,6 @@
 #include "gui_pwdfill.hpp"
 #include "gui_resource.h"
-#include "lfs_base.h"
+#include "little_fs.hpp"
 #include <cstdio>
 // #include "fingerprint.h"
 #include "gui_component_list.h"
@@ -17,11 +17,6 @@ using namespace gui;
 ComponentList<PWD_LIST_PAGE_SIZE, PasswordFile::PWD_NAME_MAX> pwd_list(PasswordFile::pwd_dir, PasswordFile::pwd_suffix);
 static PasswordFile current_pwd;
 static volatile bool in_select_mode = false;
-
-extern void hid_keyboard_string(const char* str);
-extern void usbd_deinit();
-
-void pwd_dir_update();
 
 static void clickon_pwd_exit(Window& wn, Display& dis, ui_operation& opt);
 static void clickon_pwd_pageup(Window& wn, Display& dis, ui_operation& opt);
@@ -85,7 +80,7 @@ void pwd_dir_update()
 void clickon_pwd_exit(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    usbd_deinit();
+    core::DeinitUSB();
     dis.switchFocusLag(&wn_cds);
     dis.refresh_count = 0;
 }
@@ -151,7 +146,7 @@ void clickon_pwd_fail(Window& wn, Display& dis, ui_operation& opt)
 void clickon_pwd_account(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
-    hid_keyboard_string(current_pwd.account);
+    core::USB_HID_Send(current_pwd.account);
 }
 
 void clickon_pwd_key(Window& wn, Display& dis, ui_operation& opt)
@@ -165,7 +160,7 @@ void clickon_pwd_key(Window& wn, Display& dis, ui_operation& opt)
     };
     Fingerprint::Authen(&fg_req);
     */
-    hid_keyboard_string(current_pwd.pwd);
+    core::USB_HID_Send(current_pwd.pwd);
 }
 
 void clickon_pwd_delete(Window& wn, Display& dis, ui_operation& opt)

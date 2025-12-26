@@ -1,7 +1,8 @@
 #ifndef _GUI_COMPONENT_LIST_H
 #define _GUI_COMPONENT_LIST_H
 
-#include "lfs_base.h"
+#include "bsp_core.h"
+#include "little_fs.hpp"
 
 template<uint8_t PAGE_SIZE, uint8_t NAME_MAX>
 class ComponentList
@@ -10,21 +11,52 @@ public:
     ComponentList(const char* base_dir_path, const char* file_suffix) :
     base_path(base_dir_path), file_suffix(file_suffix), suffix_len(strlen(file_suffix)) {}
 
-    int update()
+    PKT_ERR update()
     {
-        auto fs_dir = LittleFS::fs_dir_handler(base_path);
-        int dir_count = fs_dir.count();
+        DirectoryDelegate dir;
+        int err = dir.open(base_path);
+
+        if (err < 0)
+            return {
+                .err = __LINE__,
+                .err_fs = err,
+                .msg = "list fail to open dir"
+            };
+
+        int dir_count = dir.count();
+
+        if (dir_count < 0)
+            return {
+                .err = __LINE__,
+                .err_fs = err,
+                .msg = "list fail to count dir"
+            };
+
         _item_count = 0;
-        fs_dir.rewind();
+        dir.rewind();
         uint8_t pstart = (_item_index / PAGE_SIZE) * PAGE_SIZE;
         char (*pcache)[NAME_MAX] = _name_cache;
         for (uint32_t i = 0; i < dir_count; i++)
         {
-            //NOLINTNEXTLINE
-            lfs_info info;
-            fs_dir.next(&info);
+            lfs_info info {};
+            err = lfs_dir_read(&fs_w25q16, &dir.instance, &info);
+
+            if (err < 0)
+                return {
+                    .err = __LINE__,
+                    .err_fs = err,
+                    .msg = "list fail to read entry"
+                };
+
             if (info.type == LFS_TYPE_DIR) continue;
+
             uint32_t len = strlen(info.name);
+            if (len > NAME_MAX)
+                return {
+                    .err = __LINE__,
+                    .err_fs = LFS_ERR_OK,
+                    .msg = "list bad entry"
+                };
             if (len < suffix_len) continue;
             if (memcmp(info.name + len - suffix_len, file_suffix, strlen(file_suffix)) != 0)
                 continue;
@@ -46,7 +78,11 @@ public:
         }
         if (_item_index >= _item_count)
             _item_index = 0;
-        return 0;
+        return {
+            .err = 0,
+            .err_fs = LFS_ERR_OK,
+            .msg = nullptr,
+        };
     }
 
     bool move(int step)

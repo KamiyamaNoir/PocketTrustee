@@ -10,10 +10,8 @@
 
 using namespace gui;
 
-char gui_pin_input[6];
+static char gui_pin_input[6];
 static Window* target_window = nullptr;
-
-void cb_backto_gui_pin(Window& wn, Display& dis, ui_operation& opt);
 
 static void clickon_pin_input(Window& wn, Display& dis, ui_operation& opt);
 

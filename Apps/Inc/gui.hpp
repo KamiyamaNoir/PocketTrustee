@@ -1,12 +1,14 @@
 #ifndef APP_GUI_H
 #define APP_GUI_H
 
-#include "main.h"
+#include "bsp_core.h"
 #include "cmsis_os.h"
 
 #define GUI_WIDTH 296
 #define GUI_HEIGHT 128
 #define GUI_ARRAY 4736
+
+extern osThreadId defaultTaskHandle;
 
 #define GUI_HANDLER defaultTaskHandle
 
@@ -128,7 +130,7 @@ namespace gui
         }
         ~Window() = default;
 
-        void load(Display& dis) const;
+        PKT_ERR load(Display& dis) const;
         void resetPtr();
         void interact(Display& dis, ui_operation opt);
         void render(Display& dis, Scheme& sche) const;

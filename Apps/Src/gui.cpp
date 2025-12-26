@@ -2,8 +2,7 @@
 #include "bsp_epaper.h"
 #include <cstring>
 #include "gui_resource.h"
-#include "lfs_base.h"
-#include "cmsis_os.h"
+#include "little_fs.hpp"
 
 using namespace gui;
 
@@ -17,7 +16,7 @@ static EPD_Handler handler {
     .part_update = epaper::update_part_full
 };
 
-void render_rectangle(Scheme& sche, Control& self, bool onSelect)
+void gui::render_rectangle(Scheme& sche, Control& self, bool onSelect)
 {
     if (onSelect)
     {
@@ -28,8 +27,6 @@ void render_rectangle(Scheme& sche, Control& self, bool onSelect)
 Display gui_main(GUI_WIDTH, GUI_HEIGHT, &handler, gram_end, gram_cache);
 
 extern Window wn_cds;
-
-extern osThreadId defaultTaskHandle;
 
 void gui::GUI_Task()
 {
@@ -358,12 +355,49 @@ void Display::process(ui_operation operation)
 }
 
 
-void Window::load(Display& dis) const
+PKT_ERR Window::load(Display& dis) const
 {
-    if (res->path != nullptr)
-        LittleFS::fs_read(res->path, dis.load_cache, res->rw*ch);
-    else
+    uint8_t buffer[128];
+    lfs_file_config open_cfg = {
+        .buffer = buffer,
+    };
+
+    if (res->path == nullptr || res->path[0] == '\0')
+    {
         memset(dis.load_cache, 0xFF, res->rw*ch);
+        return {
+            .err = 0,
+            .err_fs = LFS_ERR_OK,
+            .msg = nullptr
+        };
+    }
+    FileDelegate file;
+    int err = file.open(res->path, LFS_O_RDONLY, &open_cfg);
+    if (err < 0)
+        return {
+            .err = -1,
+            .err_fs = err,
+            .msg = "Fail to open res"
+        };
+    err = lfs_file_read(&fs_w25q16, &file.instance, dis.load_cache, res->rw*res->rh/8);
+    if (err < 0)
+        return {
+            .err = -1,
+            .err_fs = err,
+            .msg = "Fail to read res"
+        };
+    if (err != res->rw*res->rh/8)
+        return {
+            .err = -1,
+            .err_fs = LFS_ERR_OK,
+            .msg = "Bad res file"
+        };
+
+    return {
+        .err = 0,
+        .err_fs = LFS_ERR_OK,
+        .msg = nullptr
+    };
 }
 
 void Window::resetPtr()
@@ -376,21 +410,21 @@ void Window::interact(Display& dis, ui_operation opt)
     // when resource numer is zero, it is unnecessary to react with any operation
     if (ctr_count == 0) return;
 
-    auto* res = &ctr_list[ctr_ptr % ctr_count];
+    auto* tres = &ctr_list[ctr_ptr % ctr_count];
 
-    if (res->onClick != nullptr) res->onClick(*this, dis, opt);
+    if (tres->onClick != nullptr) tres->onClick(*this, dis, opt);
 
     if (opt != OP_ENTER)
     {
         ctr_ptr += opt;
-        res = &ctr_list[ctr_ptr % ctr_count];
+        tres = &ctr_list[ctr_ptr % ctr_count];
         // check if resource is selectable
-        if (res->selectable) return;
+        if (tres->selectable) return;
         uint8_t dest = ctr_ptr + opt*ctr_count;
         for (ctr_ptr+=opt; opt*(ctr_ptr - dest) < 0; ctr_ptr+=opt)
         {
-            res = &ctr_list[ctr_ptr % ctr_count];
-            if (res->selectable) break;
+            tres = &ctr_list[ctr_ptr % ctr_count];
+            if (tres->selectable) break;
         }
     }
 }

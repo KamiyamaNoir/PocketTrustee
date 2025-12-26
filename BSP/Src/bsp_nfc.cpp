@@ -3,12 +3,17 @@
 #include "simple_buffer.hpp"
 #include "usart.h"
 
-nfc::NFC_Route nfc_current_route = nfc::ROUTE_NONE;
+static nfc::NFC_Route nfc_current_route = nfc::ROUTE_NONE;
 extern StaticRingBuffer cdc_receive_ring_buffer;
 
-void nfc::set_route()
+nfc::NFC_Route nfc::get_route()
 {
-    NFC_Route route = nfc_current_route;
+    return nfc_current_route;
+}
+
+void nfc::set_route(NFC_Route route)
+{
+    nfc_current_route = route;
     HF_EN1_GPIO_Port->BSRR = HF_EN1_Pin;
     if (route == ROUTE_NONE) return;
     if (route == ROUTE_PN532)
@@ -46,18 +51,15 @@ void nfc::set_route()
 }
 
 extern void cdc_acm_data_send(const uint8_t* data, uint8_t len, uint16_t timeout);
-extern void cdc_acm_init();
-extern void usbd_deinit();
 uint8_t PN532_RX_BUFFER[128];
 static uint8_t PN532_TX_BUFFER[128];
 static volatile bool in_transparent_mode = false;
 
 void nfc::enable_transparent_mode()
 {
-    cdc_acm_init();
+    core::RegisterACMDevice();
     MX_USART3_UART_Init();
-    nfc_current_route = ROUTE_PN532;
-    set_route();
+    set_route(ROUTE_PN532);
     pn532::reset();
     cdc_receive_ring_buffer.clear();
     HAL_UARTEx_ReceiveToIdle_IT(&huart3, PN532_RX_BUFFER, 128);
@@ -66,12 +68,11 @@ void nfc::enable_transparent_mode()
 
 void nfc::disable_transparent_mode()
 {
-    usbd_deinit();
+    core::DeinitUSB();
     HAL_UART_DeInit(&huart3);
     in_transparent_mode = false;
     PN_PD_GPIO_Port->BRR = PN_PD_Pin;
-    nfc_current_route = ROUTE_NONE;
-    set_route();
+    set_route(ROUTE_NONE);
     cdc_receive_ring_buffer.clear();
 }
 
