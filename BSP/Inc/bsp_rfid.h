@@ -65,7 +65,7 @@ namespace rfid
 
             FileDelegate file;
 
-            uint8_t file_buffer[128];
+            uint8_t file_buffer[LittleFS_W25Q16::CACHE_SIZE];
             lfs_file_config open_cfg = {
                 .buffer = file_buffer,
             };

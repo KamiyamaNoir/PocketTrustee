@@ -49,6 +49,8 @@ namespace crypto
     //     uint32_t crc_result;
     // };
 
+    uint32_t aes_pad(uint8_t * data, uint32_t len, uint32_t max);
+
     CRYPTO_RESULT skeygen(const KeygenConfiguration* cfg, char* dst);
 
     CRYPTO_RESULT totp_calculate(uint8_t* key, uint8_t key_length, uint32_t* result, uint8_t step=30, uint32_t mask=1000000UL);

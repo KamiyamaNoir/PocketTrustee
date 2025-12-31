@@ -287,12 +287,12 @@ class Connection:
             console.print(item[:-5])
             
     def send_wifi_add(self, ssid: str, pwd: str):
-        Tpath = f'wifi/{ssid}.wifi'
-        wifi_dir = self.send_su_file_ls('wifi/')
+        Tpath = f'cards/{ssid}.card'
+        wifi_dir = self.send_su_file_ls('cards/')
         wifi_dir = wifi_dir.split('\n')
         wifi_dir.remove('./')
         wifi_dir.remove('../')
-        if f'{ssid}.wifi' in wifi_dir:
+        if f'{ssid}.card' in wifi_dir:
             raise ValueError("该WIFI已经存在,请先删除")
         wifi_card = WIFICard()
         wifi_card.make(ssid, pwd)
@@ -300,28 +300,28 @@ class Connection:
         self.send_su_file_write(Tpath, data)
     
     def send_wifi_delete(self, ssid: str):
-        Tpath = f'wifi/{ssid}.wifi'
+        Tpath = f'cards/{ssid}.card'
         self.send_su_file_rm(Tpath)
         
     def send_wifi_list(self):
-        wifi_dir = self.send_su_file_ls('wifi/')
+        wifi_dir = self.send_su_file_ls('cards/')
         wifi_dir = wifi_dir.split('\n')
         wifi_dir.remove('./')
         wifi_dir.remove('../')
         for item in wifi_dir:
             if len(item) == 0:
                 continue
-            if item[-5:] != '.wifi':
+            if item[-5:] != '.card':
                 continue
             console.print(item[:-5])
             
     def send_namecard_add(self, name: str, **kargs):
-        Tpath = f'namecard/{name}.ncard'
-        card_dir = self.send_su_file_ls('namecard/')
+        Tpath = f'cards/{name}.card'
+        card_dir = self.send_su_file_ls('cards/')
         card_dir = card_dir.split('\n')
         card_dir.remove('./')
         card_dir.remove('../')
-        if f'{name}.ncard' in card_dir:
+        if f'{name}.card' in card_dir:
             raise ValueError("该名片已经存在,请先删除")
         name_card = NameCard()
         name_card.make(name, **kargs)
@@ -329,18 +329,18 @@ class Connection:
         self.send_su_file_write(Tpath, data)
     
     def send_namecard_delete(self, name: str):
-        Tpath = f'namecard/{name}.ncard'
+        Tpath = f'cards/{name}.card'
         self.send_su_file_rm(Tpath)
         
     def send_namecard_list(self):
-        card_dir = self.send_su_file_ls('namecard/')
+        card_dir = self.send_su_file_ls('cards/')
         card_dir = card_dir.split('\n')
         card_dir.remove('./')
         card_dir.remove('../')
         for item in card_dir:
             if len(item) == 0:
                 continue
-            if item[-6:] != '.ncard':
+            if item[-5:] != '.card':
                 continue
             console.print(item[:-6])
 
@@ -360,7 +360,10 @@ class Connection:
                 break
             try:
                 rtvl = cbor2.loads(nread)
-                ls_str += rtvl[0] + '\n'
+                ls_str += rtvl[0]
+                if (rtvl[1] == 'D'):
+                    ls_str += '/'
+                ls_str += '\n'
                 self.send_data(b'ok')
             except:
                 continue

@@ -1,7 +1,6 @@
 {
     "version": "1.1.0",
     "directory": [
-        "gui_fg",
         "gui_idcard",
         "gui_lock",
         "gui_main",
@@ -9,18 +8,13 @@
         "gui_pwd",
         "gui_trans",
         "idcards",
-        "namecard",
+        "cards",
         "otp",
         "passwords",
-        "texture",
-        "wifi"
+        "texture"
     ],
     "package": {
         "device.info": "device.info.bin",
-        "gui_fg/authen": "fg_authen.bin",
-        "gui_fg/pass": "fg_pass.bin",
-        "gui_fg/fail": "fg_fail.bin",
-        "gui_fg/fgmn": "fgmanage.bin",
         "gui_idcard/emulate": "id_emulate.bin",
         "gui_idcard/read_idcard": "id_card.bin",
         "gui_lock/locked": "lock.bin",

@@ -400,6 +400,9 @@ void hid_keyboard_init()
 
 void hid_keyboard_char(char chr)
 {
+    if (chr < 32 || chr > 126)
+        return;
+
     uint16_t timeout = 100;
     uint32_t Tickstart = HAL_GetTick();
     uint8_t sendbuffer[8] = { ASCII_TO_HID_BYTE0[chr-32], 0x00, ASCII_TO_HID_BYTE2[chr-32], 0x00, 0x00, 0x00, 0x00, 0x00 };

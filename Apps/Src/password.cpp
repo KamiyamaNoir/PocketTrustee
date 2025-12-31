@@ -5,6 +5,7 @@
 #include "zcbor_encode.h"
 #include "aes.h"
 #include <cstring>
+#include "crypto_base.hpp"
 
 PKT_ERR PasswordFile::load(const char* pwd_name)
 {
@@ -148,7 +149,9 @@ PKT_ERR PasswordFile::save()
     zcbor_tstr_encode_ptr(state, pwd, strlen(pwd));
     zcbor_list_end_encode(state, 2);
 
-    auto status = HAL_CRYP_AESECB_Encrypt(&hcryp, payload, sizeof(payload), encrypto_payload, 1000);
+    auto pad_size = crypto::aes_pad(payload, state->payload - payload, sizeof(payload));
+
+    auto status = HAL_CRYP_AESECB_Encrypt(&hcryp, payload, pad_size, encrypto_payload, 1000);
 
     if (status != HAL_OK)
         return {
@@ -170,7 +173,7 @@ PKT_ERR PasswordFile::save()
             .msg = "pwd file open failed"
         };
 
-    err = lfs_file_write(&fs_w25q16, &file.instance, encrypto_payload, state->payload - payload);
+    err = lfs_file_write(&fs_w25q16, &file.instance, encrypto_payload, pad_size);
 
     if (err < 0)
         return {

@@ -57,6 +57,18 @@ using namespace crypto;
 //     return CRYPTO_SUCCESS;
 // }
 
+uint32_t crypto::aes_pad(uint8_t* data, uint32_t len, uint32_t max)
+{
+    uint32_t pad_length = (16 - len % 16) % 16;
+    for (uint32_t i = len; ; i++)
+    {
+        data[i] = '\0';
+        --pad_length;
+        if (i == max - 1 || pad_length == 0)
+            return i + 1;
+    }
+}
+
 CRYPTO_RESULT crypto::skeygen(const KeygenConfiguration* cfg, char* dst)
 {
     uint8_t chars_len = 0;

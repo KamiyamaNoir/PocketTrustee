@@ -182,7 +182,7 @@ void clickon_pwdgen_save(Window& wn, Display& dis, ui_operation& opt)
     rtc::TimeDate td;
     rtc::getTimedate(&td);
     char name[26];
-    sprintf(name, "%d-%d-%d %d-%d-%d", td.year, td.month, td.day, td.hour, td.minute, td.second);
+    sprintf(name, "%d-%d-%d@%d-%d-%d", td.year, td.month, td.day, td.hour, td.minute, td.second);
 
     auto pwd_handler = PasswordFile();
     strcpy(pwd_handler.name, name);

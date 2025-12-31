@@ -1,5 +1,5 @@
 #include "gui_manager_mode.hpp"
-#include "gui_menup1.hpp"
+#include "gui_mainpage.hpp"
 #include <cstring>
 #include "bsp_core.h"
 #include "host.hpp"
@@ -47,7 +47,7 @@ void clickon_manager_exit(Window& wn, Display& dis, ui_operation& opt)
     if (opt != OP_ENTER) return;
     core::StopIdealTask();
     core::DeinitUSB();
-    dis.switchFocusLag(&wn_menu_page1);
+    dis.switchFocusLag(&wn_cds);
     dis.refresh_count = 0;
 }
 

@@ -1,5 +1,5 @@
 #include "gui_component_list.h"
-#include "gui_menup1.hpp"
+#include "gui_mainpage.hpp"
 #include "gui_cards.hpp"
 
 #define GUI_CARDS_CTRNUM 1
@@ -7,7 +7,7 @@
 
 using namespace gui;
 
-ComponentList<GUI_CARDS_PAGESIZE, 25> card_list("wifi/", ".wifi");
+ComponentList<GUI_CARDS_PAGESIZE, 25> card_list("cards/", ".card");
 
 static char on_select_card_path[40];
 
@@ -41,9 +41,9 @@ void clickon_cards_list(Window& wn, Display& dis, ui_operation& opt)
     {
         if (res_cards.path == nullptr && card_list.on_select() != -1)
         {
-            strcpy(on_select_card_path, "wifi/");
+            strcpy(on_select_card_path, card_list.base_path);
             strcat(on_select_card_path, card_list.seek(card_list.on_select()));
-            strcat(on_select_card_path, ".wifi");
+            strcat(on_select_card_path, card_list.file_suffix);
             res_cards.path = on_select_card_path;
             dis.switchFocusLag(&wn);
             dis.refresh_count = 0;
@@ -51,7 +51,7 @@ void clickon_cards_list(Window& wn, Display& dis, ui_operation& opt)
         else
         {
             res_cards.path = nullptr;
-            dis.switchFocusLag(&wn_menu_page1);
+            dis.switchFocusLag(&wn_cds);
             dis.refresh_count = 0;
         }
         return;

@@ -1,5 +1,5 @@
 #include "gui_transmode.hpp"
-#include "gui_menup1.hpp"
+#include "gui_mainpage.hpp"
 #include "bsp_nfc.h"
 
 #define GUI_TRANSMODE_CTRNUM 1
@@ -28,6 +28,6 @@ void clickon_trans_exit(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
     nfc::disable_transparent_mode();
-    dis.switchFocusLag(&wn_menu_page1);
+    dis.switchFocusLag(&wn_cds);
     dis.refresh_count = 0;
 }

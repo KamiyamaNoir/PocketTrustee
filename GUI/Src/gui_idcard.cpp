@@ -1,6 +1,5 @@
 #include "gui_idcard.hpp"
 #include "gui_mainpage.hpp"
-#include "gui_menup1.hpp"
 #include "bsp_rfid.h"
 #include <cstring>
 #include <cstdio>
@@ -146,7 +145,7 @@ void clickon_idcard_save(Window& wn, Display& dis, ui_operation& opt)
     rtc::TimeDate td;
     rtc::getTimedate(&td);
     char name[26];
-    sprintf(name, "%d-%d-%d %d-%d-%d", td.year, td.month, td.day, td.hour, td.minute, td.second);
+    sprintf(name, "%d-%d-%d@%d-%d-%d", td.year, td.month, td.day, td.hour, td.minute, td.second);
     memcpy(saved_name, name, 26);
     idcard_idcard.save(name);
     dis.switchFocusLag(&wn_idcard_saved);
@@ -160,7 +159,7 @@ void clickon_iccard_exit(Window& wn, Display& dis, ui_operation& opt)
     idcard_onwaiting = false;
     rfid::set_drive_mode(rfid::STOP);
     core::StopIdealTask();
-    dis.switchFocusLag(&wn_menu_page1);
+    dis.switchFocusLag(&wn_cds);
     dis.refresh_count = 0;
 }
 
