@@ -1,5 +1,7 @@
 # PocketTrustee CLI
-使用python编写的CLI工具
+使用python编写的CLI工具  
+从v 1.2.0开始,WIFI和名片合并为卡片，但CLI工具无法区分，这表现在调用wifi或nameard的list指令时，不会区分wifi和名片  
+__PocketTrustee CLI将于下一个版本抛弃，由新工具PocketTrustee Control取代__
 ## 基本命令表
 ### `connect [-h] [-a] [--init] [--port COM_PORT]`  
 连接到设备，当不指定任何参数时，将显示可用串口  
