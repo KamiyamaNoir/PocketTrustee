@@ -110,7 +110,7 @@ static PKT_ERR command_invoke(bool from_startup)
     };
 
     // Decode request
-    uint16_t nread = cdc_receive_ring_buffer.read(receive_buffer, HOST_CACHE_SIZE);
+    uint16_t nread = polling_for_data(receive_buffer, HOST_CACHE_SIZE, 1000);
     if (nread == 0) return {
         .err = 0,
         .err_fs = LFS_ERR_OK,
@@ -140,8 +140,8 @@ static PKT_ERR command_invoke(bool from_startup)
     // Req : Hello -> send back version
     if (IS_COMMAND(require_desc, "hello"))
     {
-        char v_str[32] {};
-        sprintf(v_str, "trustee:%u.%u.%u", version_c1, version_c2, version_c3);
+        char v_str[sizeof(device_name) + 32] {};
+        sprintf(v_str, "trustee:%u.%u.%u\n%s", version_c1, version_c2, version_c3, device_name);
         send(v_str, strlen(v_str));
         return {
             .err = 0,
@@ -180,6 +180,8 @@ static PKT_ERR command_invoke(bool from_startup)
             NVIC_SystemReset();
         }
 
+        LittleFS_W25Q16::Mount();
+
         // Set AES key
         auto* key = new uint8_t[16];
         for (int i = 0; i < 16; i++)
@@ -213,10 +215,10 @@ static PKT_ERR command_invoke(bool from_startup)
         ZCBOR_TO_CSTRING(usr_str, device_name);
 
         // Register pin code
-        char pin[6];
+        char pin[7];
         success = zcbor_tstr_expect_ptr(zcbor_state, "pin", 3);
         success = success && zcbor_tstr_decode(zcbor_state, &usr_str);
-        if (!success || usr_str.len != sizeof(pin)) return {
+        if (!success || usr_str.len != 6) return {
             .err = __LINE__,
             .err_fs = LFS_ERR_OK,
             .msg = "err load pin"
@@ -225,14 +227,15 @@ static PKT_ERR command_invoke(bool from_startup)
         PIN_CODE::setPinCode(pin);
 
         // Calibrate RTC
-        uint32_t timestamp;
+        uint32_t timestamp = 0;
         success = zcbor_tstr_expect_ptr(zcbor_state, "timestamp", 9);
-        success = success && zcbor_uint32_decode(zcbor_state, &timestamp);
+        success = success && zcbor_uint_decode(zcbor_state, &timestamp, 4);
         if (!success) return {
             .err = __LINE__,
             .err_fs = LFS_ERR_OK,
             .msg = "err load timestamp"
         };
+        // 32bit unix time only
         rtc::TimeDate dt {};
         rtc::UnixToTimedate(timestamp, &dt, TIME_ZONE_OFFSET_Shanghai);
         rtc::setTimedate(&dt);
@@ -242,7 +245,7 @@ static PKT_ERR command_invoke(bool from_startup)
 
         return {
             .err = 0,
-            .err_fs = 1,
+            .err_fs = 0,
             .msg = nullptr
         };
     }
@@ -324,6 +327,15 @@ static PKT_ERR command_invoke(bool from_startup)
     if (IS_COMMAND(require_desc, "su_state"))
     {
         return invoke_fs_state();
+    }
+    if (IS_COMMAND(require_desc, "su_exit"))
+    {
+        manager_user[0] = '\0';
+        return {
+            .err = 0,
+            .err_fs = 1,
+            .msg = nullptr
+        };
     }
 
     return {
@@ -513,7 +525,7 @@ PKT_ERR invoke_fswrite(zcbor_state_t* zcbor_state)
 
     ZCBOR_TO_CSTRING(zcbor_str, path);
 
-    uint8_t file_buffer[128];
+    uint8_t file_buffer[LittleFS_W25Q16::CACHE_SIZE];
     lfs_file_config open_cfg = {
         .buffer = file_buffer,
     };
@@ -527,7 +539,7 @@ PKT_ERR invoke_fswrite(zcbor_state_t* zcbor_state)
     };
 
     // SHA1 Check
-    uint8_t feedback[20];
+    uint8_t feedback[20] {};
     cmox_sha1_handle_t sha1;
     cmox_hash_handle_t* hash = cmox_sha1_construct(&sha1);
     cmox_hash_init(hash);
@@ -535,7 +547,6 @@ PKT_ERR invoke_fswrite(zcbor_state_t* zcbor_state)
 
     // Synchronize
     send_msg("ok");
-    polling_for_data(receive_buffer, HOST_CACHE_SIZE, 1000);
 
     // File transmit begin
     for (;;)
@@ -556,7 +567,7 @@ PKT_ERR invoke_fswrite(zcbor_state_t* zcbor_state)
         success = success && zcbor_tstr_expect_ptr(state, "data", 4);
         success = success && zcbor_bstr_decode(state, &zcbor_str);
 
-        if (!success) return {
+        if (!success || zcbor_str.len > 256) return {
             .err = __LINE__,
             .err_fs = LFS_ERR_OK,
             .msg = "err decode data"
@@ -615,7 +626,7 @@ PKT_ERR invoke_fsread(zcbor_state_t* zcbor_state)
 
     ZCBOR_TO_CSTRING(zcbor_str, path);
 
-    uint8_t file_buffer[128];
+    uint8_t file_buffer[LittleFS_W25Q16::CACHE_SIZE];
     lfs_file_config open_cfg = {
         .buffer = file_buffer,
     };
@@ -637,7 +648,12 @@ PKT_ERR invoke_fsread(zcbor_state_t* zcbor_state)
 
     // Synchronize
     send_msg("ok");
-    polling_for_data(receive_buffer, HOST_CACHE_SIZE, 1000);
+    auto nread = polling_for_data(receive_buffer, HOST_CACHE_SIZE, 1000);
+    if (nread == 0) return {
+        .err = __LINE__,
+        .err_fs = LFS_ERR_OK,
+        .msg = "host timeout"
+    };
 
     // File transmit begin
     for (;;)
@@ -680,8 +696,8 @@ PKT_ERR invoke_fsread(zcbor_state_t* zcbor_state)
         send(payload_buffer, state->payload - payload_buffer);
 
         // wait for response
-        uint16_t nread = polling_for_data(receive_buffer, HOST_CACHE_SIZE, 1000);
-        if (nread == 0) return {
+        uint16_t host_read = polling_for_data(receive_buffer, HOST_CACHE_SIZE, 1000);
+        if (host_read == 0) return {
             .err = __LINE__,
             .err_fs = LFS_ERR_OK,
             .msg = "host timeout"
@@ -757,27 +773,43 @@ PKT_ERR invoke_fs_ls(zcbor_state_t* zcbor_state)
             .msg = "err reading dir"
         };
 
-        char readback[64];
-        char desc = 'F';
-
-        if (info.type == LFS_TYPE_DIR)
-            desc = 'D';
-
-        int print_err = sprintf(readback, "%s %c %lu\n", info.name, desc, info.size);
-
-        if (print_err < 0 || print_err > sizeof(readback)) return {
-            .err = __LINE__,
-            .err_fs = LFS_ERR_OK,
-            .msg = "sprintf fatial err"
-        };
-
-        send(readback, print_err);
-
         if (read_err == 0)
         {
             send_msg("endl");
             break;
         }
+
+        uint8_t payload[LFS_NAME_MAX + 32];
+        ZCBOR_STATE_E(state, 2, payload, sizeof(payload), 1);
+
+        success = zcbor_list_start_encode(state, 3);
+        success = success && zcbor_tstr_encode_ptr(state, info.name, strlen(info.name));
+        if (info.type == LFS_TYPE_DIR)
+        {
+            success = success && zcbor_tstr_encode_ptr(state, "D", 1);
+        }
+        else
+        {
+            success = success && zcbor_tstr_encode_ptr(state, "F", 1);
+        }
+        success = success && zcbor_uint32_put(state, info.size);
+        success = success && zcbor_list_end_encode(state, 3);
+
+        if (!success) return {
+            .err = __LINE__,
+            .err_fs = LFS_ERR_OK,
+            .msg = "encode fatial err"
+        };
+
+        send(payload, state->payload - payload);
+
+        // Synchronize
+        auto nread = polling_for_data(receive_buffer, HOST_CACHE_SIZE, 1000);
+        if (nread == 0) return {
+            .err = __LINE__,
+            .err_fs = LFS_ERR_OK,
+            .msg = "host timeout"
+        };
     }
 
     return {
@@ -816,7 +848,7 @@ PKT_ERR invoke_fs_rm(zcbor_state_t* zcbor_state)
         return {
             .err = __LINE__,
             .err_fs = err,
-            .msg = "rename err"
+            .msg = "remove err"
         };
 
     send_msg("success");

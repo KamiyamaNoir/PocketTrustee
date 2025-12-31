@@ -357,7 +357,7 @@ void Display::process(ui_operation operation)
 
 PKT_ERR Window::load(Display& dis) const
 {
-    uint8_t buffer[128];
+    uint8_t buffer[LittleFS_W25Q16::CACHE_SIZE];
     lfs_file_config open_cfg = {
         .buffer = buffer,
     };

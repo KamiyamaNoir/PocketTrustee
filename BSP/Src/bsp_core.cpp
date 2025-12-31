@@ -1,5 +1,6 @@
 #include "bsp_core.h"
 #include "bsp_adc.h"
+// #include "bsp_epaper.h"
 #include "bsp_nfc.h"
 #include "bsp_rfid.h"
 #include "cmsis_os.h"
@@ -36,17 +37,41 @@ void sys_startup()
     rfid::set_drive_mode(rfid::STOP);
     cmox_init_arg_t init_target = {CMOX_INIT_TARGET_L4, nullptr};
     cmox_initialize(&init_target);
-    LittleFS_W25Q16::Mount();
+    int fs_err = LittleFS_W25Q16::Mount();
+    if (fs_err < 0)
+    {
+        LittleFS_W25Q16::Format();
+        fs_err = LittleFS_W25Q16::Mount();
+        if (fs_err < 0)
+            SysFaultHandler(43);
+    }
 #ifndef DEBUG_ENABLE
+    core::RegisterACMDevice();
     for (;;)
     {
         auto err = Host::hostCommandInvoke(true);
         if (err.err == 0 && err.err_fs == 1)
             break;
     }
+    core::DeinitUSB();
 #endif
     // HAL_UARTEx_ReceiveToIdle_IT(&huart1, uart_buffer, sizeof(uart_buffer));
-    fingerprint_uart_callback(0);
+    // fingerprint_uart_callback(0);
+}
+
+void SysFaultHandler(int err)
+{
+    // char err_code[8];
+    // gui::Scheme sche(0, 0, GUI_WIDTH, GUI_HEIGHT, gui_main, gui_main.load_cache);
+    // sche
+    // .clear()
+    // .put_string(0, 0, gui::ASCII_1608, ":( It looks like your device went something wrong");
+    // sprintf(err_code, "%d", err);
+    // sche.put_string(0, 20, gui::ASCII_3216, err_code);
+    // epaper::pre_update(sche.data);
+    __disable_irq();
+    // HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
+    while (true) {}
 }
 
 void core::StartIdealTask()

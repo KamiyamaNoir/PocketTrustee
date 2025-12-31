@@ -8,7 +8,7 @@
 
 PKT_ERR OTP_TOTP::load(const char* totp_name)
 {
-    uint8_t file_buffer[TOTP_FILE_SIZE_MAX];
+    uint8_t file_buffer[LittleFS_W25Q16::CACHE_SIZE];
     uint8_t cache[TOTP_FILE_SIZE_MAX];
     uint8_t plaintext[TOTP_FILE_SIZE_MAX];
     char path[TOTP_NAME_MAX + sizeof(totp_dir_base) + sizeof(totp_suffix)] {};

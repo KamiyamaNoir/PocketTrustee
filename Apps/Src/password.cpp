@@ -33,7 +33,7 @@ PKT_ERR PasswordFile::load(const char* pwd_name)
     strcat(path, pwd_name);
     strcat(path, pwd_suffix);
 
-    uint8_t file_buffer[128];
+    uint8_t file_buffer[LittleFS_W25Q16::CACHE_SIZE];
     lfs_file_config open_cfg = {
         .buffer = file_buffer,
     };
@@ -157,8 +157,9 @@ PKT_ERR PasswordFile::save()
             .msg = "pwd encryption failed"
         };
 
+    uint8_t file_cache[LittleFS_W25Q16::CACHE_SIZE];
     lfs_file_config open_cfg = {
-        .buffer = payload,
+        .buffer = file_cache,
     };
     FileDelegate file;
     int err = file.open(path, LFS_O_CREAT | LFS_O_WRONLY, &open_cfg);

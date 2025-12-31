@@ -15,7 +15,7 @@ from device_fs import DeviceFS
 
 
 class PocketTrusteeCLI(Cmd):
-    version = '1.0.4'
+    version = '1.1.0'
     prompt = '(No Device)>'
     device_name = None
 
@@ -34,11 +34,13 @@ class PocketTrusteeCLI(Cmd):
 
     def connect_to_port(self, port):
         conn = Connection(port)
-        rtvl = conn.is_availiable(self.version)
-        if isinstance(rtvl, bool) and rtvl:
-            self.connection = conn
-        elif isinstance(rtvl, str):
-            raise SystemError(f"设备版本与CLI不匹配({self.version} -- {rtvl})")
+        rtvl = conn.is_availiable()
+        version = rtvl.split('\n')[0]
+        if isinstance(rtvl, str):
+            if version == self.version:
+                self.connection = conn
+            else:
+                raise SystemError(f"设备版本与CLI不匹配({self.version} -- {version})")
         else:
             raise TimeoutError("设备未响应")
 
@@ -53,9 +55,7 @@ class PocketTrusteeCLI(Cmd):
             for port in ports:
                 try:
                     self.connect_to_port(port.device)
-                except SystemError as e:
-                    console.print(e)
-                except TimeoutError:
+                except:
                     continue
             if not self.connection:
                 console.print("无可用设备")
@@ -212,6 +212,8 @@ class PocketTrusteeCLI(Cmd):
                 self.connection.send_su_file_write(tdir, f.read())
         self.connection.send_su_exit()
         console.print("初始化完成", style='bold green')
+        self.connection.ser.close()
+        self.connection = None
         
     # ====== Disconnect ======
     def do_disconnect(self, args):

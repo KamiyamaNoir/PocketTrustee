@@ -42,17 +42,15 @@ class Connection:
     def send_data(self, data: bytes):
         self.ser.write(data)
 
-    def is_availiable(self, version: str):
+    def is_availiable(self) -> None | str:
         self.clear_buffer()
         # send hello
         self.send_data(b'\xA1\x63\x72\x65\x71\x65\x68\x65\x6C\x6C\x6F')
         nread = self.wait_data()
         if nread is not None and len(nread) > 8 and nread[:8] == b'trustee:':
             nread = nread.decode(encoding='ascii')
-            if nread[8:] == version:
-                return True
             return nread[8:]
-        return False
+        return None
     
     def send_reset(self):
         self.clear_buffer()
@@ -95,9 +93,8 @@ class Connection:
             nread = self.wait_data(timeout=2000)
             if nread is None:
                 raise TimeoutError("验证超时")
-            if nread == b'wait':
-                self.send_data('ok'.encode(encoding='ascii'))
-                continue
+            if nread[:5] == b'error':
+                raise SystemError(nread.decode(encoding='ascii'))
             resp = cbor2.loads(nread)
             if resp['success']:
                 self.aes = aes
@@ -356,10 +353,18 @@ class Connection:
             "path": path
         }))
         # polling for data
-        nread = self.wait_data()
-        if nread is None:
-            raise TimeoutError("设备未响应")
-        return nread.decode(encoding='ascii')
+        ls_str = ""
+        while True:
+            nread = self.wait_data()
+            if nread is None or nread == b'endl':
+                break
+            try:
+                rtvl = cbor2.loads(nread)
+                ls_str += rtvl[0] + '\n'
+                self.send_data(b'ok')
+            except:
+                continue
+        return ls_str
     
     def send_su_fs_state(self):
         self.clear_buffer()
@@ -489,12 +494,13 @@ class Connection:
             if nread is None:
                 raise TimeoutError("设备未响应 - Receive")
             resp = cbor2.loads(nread)
-            freads.extend(resp['data'])
+            if resp['aval']:
+                freads.extend(resp['data'])
+                # print
+                transmit += len(resp['data'])
+                print(f"\rReceive {transmit}")
             self.send_data(b'ok')
-            # print
-            transmit += len(resp['data'])
-            print(f"\rReceive {transmit}")
-            if not resp['more']:
+            if not resp['aval']:
                 break
         # crc_check
         calculate = hashlib.sha1(freads).digest()

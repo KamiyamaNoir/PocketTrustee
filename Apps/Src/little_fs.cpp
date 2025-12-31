@@ -1,11 +1,6 @@
 #include "little_fs.hpp"
 #include "bsp_flash.h"
 
-// 将一个Sector作为一个Block供LFS使用，对于LFS来说一共512个Block
-#define W25Q16_SECTOR_SIZE      4096
-#define W25Q16_PAGE_SIZE        256
-#define W25Q16_FS_CACHE_SIZE    256
-#define W25Q16_FS_LOOKAHEAD_SIZE 32
 
 static int w25q16_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size)
 {
@@ -21,7 +16,7 @@ static int w25q16_write(const struct lfs_config *c, lfs_block_t block, lfs_off_t
 
     while (size > 0) {
         uint16_t write_len = size;
-        uint32_t page_remain = W25Q16_PAGE_SIZE - (addr % W25Q16_PAGE_SIZE);
+        uint32_t page_remain = LittleFS_W25Q16::PAGE_SIZE - (addr % LittleFS_W25Q16::PAGE_SIZE);
 
         if (write_len > page_remain) {
             write_len = page_remain;
@@ -50,9 +45,9 @@ static int w25q16_sync(const struct lfs_config *c)
     return LFS_ERR_OK;
 }
 
-__aligned(4) static uint8_t w25q16_prog_cache[W25Q16_FS_CACHE_SIZE];
-__aligned(4) static uint8_t w25q16_read_cache[W25Q16_FS_CACHE_SIZE];
-__aligned(4) static uint8_t w25q16_lookahead_cache[W25Q16_FS_LOOKAHEAD_SIZE];
+__aligned(4) static uint8_t w25q16_prog_cache[LittleFS_W25Q16::CACHE_SIZE];
+__aligned(4) static uint8_t w25q16_read_cache[LittleFS_W25Q16::CACHE_SIZE];
+__aligned(4) static uint8_t w25q16_lookahead_cache[LittleFS_W25Q16::LOOKAHEAD_SIZE];
 
 lfs_t fs_w25q16;
 
@@ -64,18 +59,15 @@ constexpr lfs_config fs_w25q16_config = {
 
     .read_size = 1,
     .prog_size = 1,
-    .block_size = W25Q16_SECTOR_SIZE,
-    .block_count = W25Q16_SECTOR_SIZE / W25Q16_PAGE_SIZE,
-    .block_cycles = 1000,
-    .cache_size = W25Q16_FS_CACHE_SIZE,
-    .lookahead_size = W25Q16_FS_LOOKAHEAD_SIZE,
+    .block_size = LittleFS_W25Q16::SECTOR_SIZE,
+    .block_count = 512,
+    .block_cycles = 10000,
+    .cache_size = LittleFS_W25Q16::CACHE_SIZE,
+    .lookahead_size = LittleFS_W25Q16::LOOKAHEAD_SIZE,
 
     .read_buffer = w25q16_read_cache,
     .prog_buffer = w25q16_prog_cache,
     .lookahead_buffer = w25q16_lookahead_cache,
-
-    .name_max = 32,
-    .file_max = 0x1FFFFF,
 };
 
 int LittleFS_W25Q16::Mount()

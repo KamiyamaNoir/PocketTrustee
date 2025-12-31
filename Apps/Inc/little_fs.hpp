@@ -12,6 +12,15 @@ public:
     static int Mount();
     static int Format();
 
+    // 将一个Sector作为一个Block供LFS使用，对于LFS来说一共512个Block
+    enum
+    {
+        SECTOR_SIZE = 4096,
+        PAGE_SIZE = 256,
+        CACHE_SIZE = 256,
+        LOOKAHEAD_SIZE = 32,
+    };
+
     static const char* interpret_error(int err)
     {
         /*
@@ -86,7 +95,7 @@ public:
         return err;
     }
 
-    lfs_file_t instance;
+    lfs_file_t instance {};
 private:
     bool _opened = false;
 };
@@ -137,7 +146,7 @@ public:
         return lfs_dir_rewind(&fs_w25q16, &instance);
     }
 
-    lfs_dir_t instance;
+    lfs_dir_t instance {};
 private:
     bool _opened = false;
 };

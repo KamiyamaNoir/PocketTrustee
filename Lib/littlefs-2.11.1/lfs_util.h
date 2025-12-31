@@ -12,6 +12,7 @@
 #define LFS_STRINGIZE2(x) #x
 
 #define LFS_NO_MALLOC
+// #define LFS_YES_TRACE
 
 // Users can override lfs_util.h with their own configuration by defining
 // LFS_CONFIG as a header file to include (-DLFS_CONFIG=lfs_config.h).

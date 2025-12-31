@@ -35,7 +35,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "bsp_core.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -295,6 +295,7 @@ void MPU_Config()
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
+  SysFaultHandler(-1);
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)

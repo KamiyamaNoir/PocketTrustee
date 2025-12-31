@@ -48,10 +48,10 @@
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
-uint32_t defaultTaskBuffer[ 1024 ];
+uint32_t defaultTaskBuffer[ 4096 ];
 osStaticThreadDef_t defaultTaskControlBlock;
 osThreadId manager_taskHandle;
-uint32_t manager_Buffer[ 512 ];
+uint32_t manager_Buffer[ 2048 ];
 osStaticThreadDef_t manager_ControlBlock;
 osThreadId IdealTaskHandle;
 uint32_t IdealTaskBuffer[ 128 ];
@@ -128,11 +128,11 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 1024, defaultTaskBuffer, &defaultTaskControlBlock);
+  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 4096, defaultTaskBuffer, &defaultTaskControlBlock);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of manager_task */
-  osThreadStaticDef(manager_task, StartManagerTask, osPriorityNormal, 0, 512, manager_Buffer, &manager_ControlBlock);
+  osThreadStaticDef(manager_task, StartManagerTask, osPriorityNormal, 0, 2048, manager_Buffer, &manager_ControlBlock);
   manager_taskHandle = osThreadCreate(osThread(manager_task), NULL);
 
   /* definition and creation of IdealTask */
