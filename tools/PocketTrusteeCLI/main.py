@@ -196,6 +196,11 @@ class PocketTrusteeCLI(Cmd):
             console.print(f"发生错误,{key.hex()}", style='bold red')
             return
         device_fs = DeviceFS(key)
+        rename_try_count = 1
+        if os.path.exists(f'./devices/{device_name}.pkt'):
+            while os.path.exists(f'./devices/{device_name}({str(rename_try_count)}).pkt'):
+                rename_try_count += 1
+            os.rename(f'./devices/{device_name}.pkt', f'./devices/{device_name}({str(rename_try_count)}).pkt')
         device_fs.save_as_file(f'./devices/{device_name}.pkt')
         finfo = open('./resource/resource.json', 'r', encoding='utf-8')
         finfo = json.loads(finfo.read())
@@ -212,6 +217,8 @@ class PocketTrusteeCLI(Cmd):
                 self.connection.send_su_file_write(tdir, f.read())
         self.connection.send_su_exit()
         console.print("初始化完成", style='bold green')
+        if os.path.exists(f'./devices/{device_name}({str(rename_try_count)}).pkt'):
+            console.print(f'已将原备份[green]./devices/{device_name}.pkt[white]重命名为[green]./devices/{device_name}({str(rename_try_count)}).pkt')
         self.connection.ser.close()
         self.connection = None
         
