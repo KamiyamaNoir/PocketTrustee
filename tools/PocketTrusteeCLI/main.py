@@ -292,6 +292,7 @@ class PocketTrusteeCLI(Cmd):
     @with_argparser(totp_parser)
     def do_totp(self, args):
         if args.subcmd == 'add':
+            args.key[0] = args.key[0].upper()
             if args.format[0] == 'base64':
                 key = base64.b64decode(args.key[0])
             elif args.format[0] == 'base32':

@@ -48,17 +48,14 @@
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
-uint32_t defaultTaskBuffer[ 4096 ];
+uint32_t defaultTaskBuffer[ 1024 ];
 osStaticThreadDef_t defaultTaskControlBlock;
 osThreadId manager_taskHandle;
-uint32_t manager_Buffer[ 2048 ];
-osStaticThreadDef_t manager_ControlBlock;
+uint32_t manager_taskBuffer[ 2048 ];
+osStaticThreadDef_t manager_taskControlBlock;
 osThreadId IdealTaskHandle;
 uint32_t IdealTaskBuffer[ 128 ];
 osStaticThreadDef_t IdealTaskControlBlock;
-osThreadId ADCSampleTaskHandle;
-uint32_t ADCSBuffer[ 128 ];
-osStaticThreadDef_t ADCSControlBlock;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -68,24 +65,20 @@ osStaticThreadDef_t ADCSControlBlock;
 void StartDefaultTask(void const * argument);
 void StartManagerTask(void const * argument);
 void StartIdealTask(void const * argument);
-void StartADCSample(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
 void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
 
-/* USER CODE BEGIN PREPOSTSLEEP */
-__weak void PreSleepProcessing(uint32_t ulExpectedIdleTime)
+/* USER CODE BEGIN VPORT_SUPPORT_TICKS_AND_SLEEP */
+__weak void vPortSuppressTicksAndSleep( TickType_t xExpectedIdleTime )
 {
-/* place for user code */
+  // Generated when configUSE_TICKLESS_IDLE == 2.
+  // Function called in tasks.c (in portTASK_FUNCTION).
+  // TO BE COMPLETED or TO BE REPLACED by a user one, overriding that weak one.
 }
-
-__weak void PostSleepProcessing(uint32_t ulExpectedIdleTime)
-{
-/* place for user code */
-}
-/* USER CODE END PREPOSTSLEEP */
+/* USER CODE END VPORT_SUPPORT_TICKS_AND_SLEEP */
 
 /* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
 static StaticTask_t xIdleTaskTCBBuffer;
@@ -128,20 +121,16 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 4096, defaultTaskBuffer, &defaultTaskControlBlock);
+  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 1024, defaultTaskBuffer, &defaultTaskControlBlock);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of manager_task */
-  osThreadStaticDef(manager_task, StartManagerTask, osPriorityNormal, 0, 2048, manager_Buffer, &manager_ControlBlock);
+  osThreadStaticDef(manager_task, StartManagerTask, osPriorityNormal, 0, 2048, manager_taskBuffer, &manager_taskControlBlock);
   manager_taskHandle = osThreadCreate(osThread(manager_task), NULL);
 
   /* definition and creation of IdealTask */
   osThreadStaticDef(IdealTask, StartIdealTask, osPriorityLow, 0, 128, IdealTaskBuffer, &IdealTaskControlBlock);
   IdealTaskHandle = osThreadCreate(osThread(IdealTask), NULL);
-
-  /* definition and creation of ADCSampleTask */
-  osThreadStaticDef(ADCSampleTask, StartADCSample, osPriorityBelowNormal, 0, 128, ADCSBuffer, &ADCSControlBlock);
-  ADCSampleTaskHandle = osThreadCreate(osThread(ADCSampleTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -194,7 +183,7 @@ __weak void StartManagerTask(void const * argument)
 * @retval None
 */
 /* USER CODE END Header_StartIdealTask */
-void StartIdealTask(void const * argument)
+__weak void StartIdealTask(void const * argument)
 {
   /* USER CODE BEGIN StartIdealTask */
   /* Infinite loop */
@@ -203,24 +192,6 @@ void StartIdealTask(void const * argument)
     osDelay(1);
   }
   /* USER CODE END StartIdealTask */
-}
-
-/* USER CODE BEGIN Header_StartADCSample */
-/**
-* @brief Function implementing the ADCSampleTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartADCSample */
-__weak void StartADCSample(void const * argument)
-{
-  /* USER CODE BEGIN StartADCSample */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartADCSample */
 }
 
 /* Private application code --------------------------------------------------*/

@@ -239,6 +239,12 @@ SECTIONS
   } >RAM
 
 
+  ._user_heap2_region (NOLOAD) :
+  {
+    . = ALIGN(8);
+    *(._user_heap2_region);
+    . = ALIGN(8);
+  } >RAM2
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

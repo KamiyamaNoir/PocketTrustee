@@ -10,7 +10,7 @@
 #define DEVICE_UNIQUE_ID2 (*(uint32_t*)(0x1FFF7594))
 #define DEVICE_UNIQUE_ID3 (*(uint32_t*)(0x1FFF7598))
 
-#define TRNG() HAL_RNG_GetRandomNumber(&hrng)
+#define TRNG() LL_RNG_ReadRandData32(RNG)
 
 namespace crypto
 {

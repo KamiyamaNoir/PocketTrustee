@@ -45,7 +45,7 @@ static uint8_t payload_buffer[HOST_CACHE_SIZE];
 static char connect_user[24] {};
 static char manager_user[24] {};
 
-#ifdef DEBUG_ENABLE
+#ifdef PKT_YES_DEBUG
 static char device_name[24] = "debug_xx_device";
 #else
 static char device_name[24] = "PocketTrustee";

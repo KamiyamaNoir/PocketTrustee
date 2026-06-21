@@ -58,19 +58,21 @@
 
 #define configUSE_PREEMPTION                     1
 #define configSUPPORT_STATIC_ALLOCATION          1
-#define configSUPPORT_DYNAMIC_ALLOCATION         0
+#define configSUPPORT_DYNAMIC_ALLOCATION         1
 #define configUSE_IDLE_HOOK                      0
 #define configUSE_TICK_HOOK                      0
 #define configCPU_CLOCK_HZ                       ( SystemCoreClock )
 #define configTICK_RATE_HZ                       ((TickType_t)1000)
 #define configMAX_PRIORITIES                     ( 7 )
 #define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
+#define configTOTAL_HEAP_SIZE                    ((size_t)24576)
 #define configMAX_TASK_NAME_LEN                  ( 16 )
 #define configUSE_16_BIT_TICKS                   0
 #define configUSE_MUTEXES                        1
 #define configQUEUE_REGISTRY_SIZE                8
+#define configENABLE_BACKWARD_COMPATIBILITY      0
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION  1
-#define configUSE_TICKLESS_IDLE                  1
+#define configUSE_TICKLESS_IDLE                  2
 /* USER CODE BEGIN MESSAGE_BUFFER_LENGTH_TYPE */
 /* Defaults to size_t for backward compatibility, but can be changed
    if lengths will always be less than the number of bytes in a size_t. */
@@ -83,14 +85,16 @@
 
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */
-#define INCLUDE_vTaskPrioritySet             1
-#define INCLUDE_uxTaskPriorityGet            1
+#define INCLUDE_vTaskPrioritySet             0
+#define INCLUDE_uxTaskPriorityGet            0
 #define INCLUDE_vTaskDelete                  1
 #define INCLUDE_vTaskCleanUpResources        0
 #define INCLUDE_vTaskSuspend                 1
 #define INCLUDE_vTaskDelayUntil              0
 #define INCLUDE_vTaskDelay                   1
 #define INCLUDE_xTaskGetSchedulerState       1
+#define INCLUDE_xTaskResumeFromISR           0
+#define INCLUDE_eTaskGetState                1
 
 /* Cortex-M specific definitions. */
 #ifdef __NVIC_PRIO_BITS
@@ -137,22 +141,5 @@ standard names. */
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
 #define configEXPECTED_IDLE_TIME_BEFORE_SLEEP 1000
 /* USER CODE END Defines */
-
-#if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
-void PreSleepProcessing(uint32_t ulExpectedIdleTime);
-void PostSleepProcessing(uint32_t ulExpectedIdleTime);
-#endif /* defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__) */
-
-/* The configPRE_SLEEP_PROCESSING() and configPOST_SLEEP_PROCESSING() macros
-allow the application writer to add additional code before and after the MCU is
-placed into the low power state respectively. */
-#if configUSE_TICKLESS_IDLE == 1
-#define configPRE_SLEEP_PROCESSING(__x__)                           \
-                                       do {                         \
-                                         PreSleepProcessing(__x__); \
-                                         __x__ = 0;                 \
-                                      }while(0)
-#define configPOST_SLEEP_PROCESSING                       PostSleepProcessing
-#endif /* configUSE_TICKLESS_IDLE == 1 */
 
 #endif /* FREERTOS_CONFIG_H */

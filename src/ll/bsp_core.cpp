@@ -1,10 +1,10 @@
 #include "bsp_core.h"
-#include "bsp_adc.h"
 // #include "bsp_epaper.h"
 #include "bsp_nfc.h"
 #include "bsp_rfid.h"
 #include "cmsis_os.h"
 #include "crypto_base.hpp"
+#include "driver_adc.hpp"
 #include "tim.h"
 #include "gui.hpp"
 #include "host.hpp"
@@ -20,10 +20,7 @@ extern void hid_keyboard_string(const char* str);
 extern void fingerprint_uart_callback(uint16_t size);
 
 extern osThreadId manager_taskHandle;
-extern osThreadId ADCSampleTaskHandle;
 extern osThreadId IdealTaskHandle;
-
-void SystemClockConfig(core::SYSTEM_CLK clk);
 
 void HAL_Delay(uint32_t Delay)
 {
@@ -32,8 +29,24 @@ void HAL_Delay(uint32_t Delay)
 
 // static uint8_t uart_buffer[128];
 
+__attribute__((section("._user_heap2_region"))) static uint8_t _userHeapRegion1[ SRAM2_SIZE ];
+static uint8_t _userHeapRegion2[ 0x2000 ];
+
+const HeapRegion_t xHeapRegions[] =
+{
+    {_userHeapRegion1, SRAM2_SIZE},
+    {_userHeapRegion2, sizeof(_userHeapRegion2)},
+    { nullptr, 0 }
+};
+
 void sys_startup()
 {
+    DEBUG_INFO("RTOS Entry");
+
+    vPortDefineHeapRegions(xHeapRegions);
+
+    DEBUG_INFO("Heap Regions %p %p", _userHeapRegion1, _userHeapRegion2);
+
     rfid::set_drive_mode(rfid::STOP);
     cmox_init_arg_t init_target = {CMOX_INIT_TARGET_L4, nullptr};
     cmox_initialize(&init_target);
@@ -45,7 +58,8 @@ void sys_startup()
         if (fs_err < 0)
             SysFaultHandler(43);
     }
-#ifndef DEBUG_ENABLE
+    CoreADC::Refresh();
+#ifndef PKT_YES_DEBUG
     core::RegisterACMDevice();
     for (;;)
     {
@@ -76,31 +90,37 @@ void SysFaultHandler(int err)
 
 void core::StartIdealTask()
 {
+    DEBUG_INFO("start ideal task");
     vTaskResume(IdealTaskHandle);
 }
 
 void core::StopIdealTask()
 {
+    DEBUG_INFO("stop ideal task");
     vTaskSuspend(IdealTaskHandle);
 }
 
 void core::StartManagerTask()
 {
+    DEBUG_INFO("start manager task");
     vTaskResume(manager_taskHandle);
 }
 
 void core::StopManagerTask()
 {
+    DEBUG_INFO("stop manager task");
     vTaskSuspend(manager_taskHandle);
 }
 
 void core::RegisterACMDevice()
 {
+    DEBUG_INFO("register acm device");
     cdc_acm_init();
 }
 
 void core::RegisterHIDDevice()
 {
+    DEBUG_INFO("register hid device");
     hid_keyboard_init();
 }
 
@@ -111,6 +131,7 @@ void core::USB_HID_Send(const char* content)
 
 void core::DeinitUSB()
 {
+    DEBUG_INFO("deinit usb");
     usbd_deinit();
 }
 
@@ -127,107 +148,6 @@ void StartManagerTask(void const * argument)
         Host::hostCommandInvoke();
         osDelay(1);
     }
-}
-
-void StartADCSample(void const* argument)
-{
-    for (;;)
-    {
-        // osDelay(100);
-        bsp_adc::start_convert();
-        osDelay(500);
-        bsp_adc::stop_convert();
-        vTaskSuspend(nullptr);
-    }
-}
-
-void PreSleepProcessing(uint32_t ulExpectedIdleTime)
-{
-#ifndef DEBUG_ENABLE
-    HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
-#endif
-}
-
-void PostSleepProcessing(uint32_t ulExpectedIdleTime)
-{
-#ifndef DEBUG_ENABLE
-    SystemClockConfig(core::SCLK_FULLSPEED);
-#endif
-    vTaskResume(ADCSampleTaskHandle);
-}
-
-void SystemClockConfig(core::SYSTEM_CLK clk)
-{
-    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-
-    __disable_irq();
-    // Cut off periphery
-    usbd_deinit();
-    HAL_UART_DeInit(&hlpuart1);
-    HAL_UART_DeInit(&huart1);
-    HAL_UART_DeInit(&huart3);
-
-    // Switch to MSI before reconfiguration
-    HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-    HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0);
-
-    // reconfigurate pll
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_LSE
-                              |RCC_OSCILLATORTYPE_MSI;
-    RCC_OscInitStruct.LSEState = RCC_LSE_ON;
-    RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
-    RCC_OscInitStruct.MSIState = RCC_MSI_ON;
-    RCC_OscInitStruct.MSICalibrationValue = 0;
-    RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
-    RCC_OscInitStruct.PLL.PLLM = 1;
-    RCC_OscInitStruct.PLL.PLLN = 16;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV8;
-    RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV8;
-    RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV4;
-    if (clk == core::SCLK_HIGHSPEED)
-        RCC_OscInitStruct.PLL.PLLN = 80;
-    else if (clk == core::SCLK_FULLSPEED)
-        RCC_OscInitStruct.PLL.PLLN = 32;
-    else
-        RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-    HAL_RCC_OscConfig(&RCC_OscInitStruct);
-
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                                  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-    // reconfigurate sysclk according to clk
-    if (clk == core::SCLK_FULLSPEED)
-    {
-        RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-        HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1);
-        HAL_RCCEx_EnableMSIPLLMode();
-    }
-    else if (clk == core::SCLK_HIGHSPEED)
-    {
-        RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-        HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4);
-        HAL_RCCEx_EnableMSIPLLMode();
-    }
-    else if (clk == core::SCLK_SLEEPSPEED)
-    {
-        RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
-        RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV4;
-        HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0);
-        HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE2);
-    }
-
-    __enable_irq();
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)

@@ -53,7 +53,6 @@ void MX_RTC_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN RTC_Init 2 */
-  HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 43200, RTC_WAKEUPCLOCK_CK_SPRE_16BITS);
   /* USER CODE END RTC_Init 2 */
 
 }
@@ -104,3 +103,4 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* rtcHandle)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
+

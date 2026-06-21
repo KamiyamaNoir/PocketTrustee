@@ -24,8 +24,6 @@
 
 /* USER CODE END 0 */
 
-RNG_HandleTypeDef hrng;
-
 /* RNG init function */
 void MX_RNG_Init(void)
 {
@@ -34,63 +32,31 @@ void MX_RNG_Init(void)
 
   /* USER CODE END RNG_Init 0 */
 
-  /* USER CODE BEGIN RNG_Init 1 */
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
-  /* USER CODE END RNG_Init 1 */
-  hrng.Instance = RNG;
-  if (HAL_RNG_Init(&hrng) != HAL_OK)
+  /** Initializes the peripherals clock
+  */
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RNG;
+  PeriphClkInit.RngClockSelection = RCC_RNGCLKSOURCE_HSI48;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
   }
+
+  /* Peripheral clock enable */
+  LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_RNG);
+
+  /* USER CODE BEGIN RNG_Init 1 */
+
+  /* USER CODE END RNG_Init 1 */
+  LL_RNG_Enable(RNG);
   /* USER CODE BEGIN RNG_Init 2 */
 
   /* USER CODE END RNG_Init 2 */
 
 }
 
-void HAL_RNG_MspInit(RNG_HandleTypeDef* rngHandle)
-{
-
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
-  if(rngHandle->Instance==RNG)
-  {
-  /* USER CODE BEGIN RNG_MspInit 0 */
-
-  /* USER CODE END RNG_MspInit 0 */
-
-  /** Initializes the peripherals clock
-  */
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RNG;
-    PeriphClkInit.RngClockSelection = RCC_RNGCLKSOURCE_HSI48;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
-    /* RNG clock enable */
-    __HAL_RCC_RNG_CLK_ENABLE();
-  /* USER CODE BEGIN RNG_MspInit 1 */
-
-  /* USER CODE END RNG_MspInit 1 */
-  }
-}
-
-void HAL_RNG_MspDeInit(RNG_HandleTypeDef* rngHandle)
-{
-
-  if(rngHandle->Instance==RNG)
-  {
-  /* USER CODE BEGIN RNG_MspDeInit 0 */
-
-  /* USER CODE END RNG_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_RNG_CLK_DISABLE();
-  /* USER CODE BEGIN RNG_MspDeInit 1 */
-
-  /* USER CODE END RNG_MspDeInit 1 */
-  }
-}
-
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
+

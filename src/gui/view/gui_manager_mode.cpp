@@ -45,6 +45,7 @@ Window wn_manager_respond(&res_manager_respond, controls_manager_respond, GUI_MA
 void clickon_manager_exit(Window& wn, Display& dis, ui_operation& opt)
 {
     if (opt != OP_ENTER) return;
+    core::StopManagerTask();
     core::StopIdealTask();
     core::DeinitUSB();
     dis.switchFocusLag(&wn_cds);

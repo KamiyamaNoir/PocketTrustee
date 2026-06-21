@@ -26,13 +26,6 @@ enum BSP_Status
 
 namespace core
 {
-    enum SYSTEM_CLK
-    {
-        SCLK_HIGHSPEED,
-        SCLK_FULLSPEED,
-        SCLK_SLEEPSPEED
-    };
-
     void StartIdealTask();
     void StopIdealTask();
 
@@ -57,7 +50,6 @@ extern "C"{
 
     void StartDefaultTask(void const * argument);
     void StartManagerTask(void const * argument);
-    void StartADCSample(void const * argument);
 
     void SysFaultHandler(int err);
 #ifdef __cplusplus

@@ -1,4 +1,4 @@
-#include "bsp_adc.h"
+#include "driver_adc.hpp"
 #include "gui_mainpage.hpp"
 #include "gui_menup1.hpp"
 #include "bsp_nfc.h"
@@ -172,7 +172,7 @@ void render_cds_texture(Scheme& sche, Control& self, bool onSelect, int args)
 
 void render_cds_icon(Scheme& sche, Control& self, bool onSelect)
 {
-    float vot = bsp_adc::getVoltageBattery();
+    float vot = CoreADC::GetBatteryVoltage();
     bool charging = HAL_GPIO_ReadPin(FLG_CHG_GPIO_Port, FLG_CHG_Pin) == GPIO_PIN_RESET;
     char vot_display[6];
     sprintf(vot_display, "%.2fv", vot);
@@ -181,5 +181,6 @@ void render_cds_icon(Scheme& sche, Control& self, bool onSelect)
     {
         sche.texture(icon_battery_charging, 50, 110, 16, 16);
     }
+    CoreADC::RefreshAsync();
 }
 

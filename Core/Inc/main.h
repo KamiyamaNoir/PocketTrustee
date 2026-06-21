@@ -29,14 +29,65 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal.h"
 
+#include "stm32l4xx_ll_dma.h"
+#include "stm32l4xx_ll_rng.h"
+#include "stm32l4xx_ll_bus.h"
+#include "stm32l4xx_ll_cortex.h"
+#include "stm32l4xx_ll_rcc.h"
+#include "stm32l4xx_ll_system.h"
+#include "stm32l4xx_ll_utils.h"
+#include "stm32l4xx_ll_pwr.h"
+#include "stm32l4xx_ll_gpio.h"
+
+#include "stm32l4xx_ll_exti.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#ifdef PKT_YES_DEBUG
+// Enable Debug
+#include <stdio.h>
+
+#if DEBUG_SHOW_INFO
+#define DEBUG_INFO_(fmt, ...) \
+printf("[%lu] [INFO] %s:%d: " fmt "%s\n", HAL_GetTick(), __FILE__, __LINE__, __VA_ARGS__)
+#define DEBUG_INFO(...) DEBUG_INFO_(__VA_ARGS__, "")
+#endif
+
+#if DEBUG_SHOW_WARN
+#define DEBUG_WARN_(fmt, ...) \
+printf("[%lu] [WARN] %s:%d: " fmt "%s\n", HAL_GetTick(), __FILE__, __LINE__, __VA_ARGS__)
+#define DEBUG_WARN(...) DEBUG_WARN_(__VA_ARGS__, "")
+#endif
+
+#if DEBUG_SHOW_ERROR
+#define DEBUG_ERR_(fmt, ...) \
+printf("[%lu] [ERROR] %s:%d: " fmt "%s\n", HAL_GetTick(), __FILE__, __LINE__, __VA_ARGS__)
+#define DEBUG_ERROR(...) DEBUG_ERR_(__VA_ARGS__, "")
+#endif
+
+#else
+// Disable Debug
+#define DEBUG_INFO(...)
+#define DEBUG_WARN(...)
+#define DEBUG_ERROR(...)
+#endif
 
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef struct
+{
+  int line;
+  int err;
+  const char * msg;
+} Exception;
 
+typedef struct
+{
+  uint8_t cancel;
+} CancellationToken;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -98,7 +149,9 @@ void Error_Handler(void);
 #define KEN_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
-// #define DEBUG_ENABLE
+#define DEVICE_UID1 (*((uint32_t*)0x1FFF7590))
+#define DEVICE_UID2 (*((uint32_t*)0x1FFF7594))
+#define DEVICE_UID3 (*((uint32_t*)0x1FFF7598))
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

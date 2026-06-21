@@ -37,6 +37,13 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
 
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -u _printf_float)
+
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -u _printf_float)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
+            PKT_YES_DEBUG
+            DEBUG_SHOW_INFO
+            DEBUG_SHOW_WARN
+            DEBUG_SHOW_ERROR
+    )
 endif()
