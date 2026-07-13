@@ -122,8 +122,6 @@ void Error_Handler(void);
 #define HF_S3_GPIO_Port GPIOC
 #define FIN_WKP_Pin GPIO_PIN_0
 #define FIN_WKP_GPIO_Port GPIOA
-#define FIN_EN_Pin GPIO_PIN_4
-#define FIN_EN_GPIO_Port GPIOA
 #define LF_MOD_Pin GPIO_PIN_5
 #define LF_MOD_GPIO_Port GPIOA
 #define PN_PD_Pin GPIO_PIN_1

@@ -189,8 +189,4 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     {
         nfc::transparent_recv_cb(Size);
     }
-    else if (huart == &hlpuart1)
-    {
-        fingerprint_uart_callback(Size);
-    }
 }

@@ -1,4 +1,3 @@
-#include "ll_sleep.hpp"
 #include "ll_clock.hpp"
 #include "lptim.h"
 #include "FreeRTOS.h"
@@ -19,24 +18,6 @@ void HAL_LPTIM_CompareMatchCallback(LPTIM_HandleTypeDef *hlptim) {
     }
 }
 
-void CoreSleepTimer::StartCountingDown(uint32_t milisecond) {
-	// 时间非常长时，不从睡眠中恢复
-	if (milisecond >= _LPTimer_MaximunMiliseconds - 50) {
-		lptimer_tick_last = 0;
-		return;
-	}
-
-	auto count = static_cast<uint16_t>(static_cast<float>(milisecond) * _LPTimer_1msStansFor);
-
-	lptimer_tick_last = static_cast<uint32_t>(static_cast<float>(count) * _LPTimer_Timebase * 1e3f);
-
-	HAL_LPTIM_TimeOut_Start_IT(_LPTimer, 0xFFFF, count);
-}
-
-void CoreSleepTimer::Trigger() {
-    __HAL_LPTIM_START_SINGLE(_LPTimer);
-}
-
 extern "C"
 {
     void vPortSuppressTicksAndSleep( TickType_t xExpectedIdleTime ) {
@@ -44,7 +25,19 @@ extern "C"
 		{
 			DEBUG_INFO("Sleep For %lu", xExpectedIdleTime);
 
-		    CoreSleepTimer::StartCountingDown(xExpectedIdleTime);
+		    // CoreSleepTimer::StartCountingDown(xExpectedIdleTime);
+
+			// 时间非常长时，不从睡眠中恢复
+			if (xExpectedIdleTime >= _LPTimer_MaximunMiliseconds - 50) {
+				lptimer_tick_last = 0;
+				return;
+			}
+
+			auto count = static_cast<uint16_t>(static_cast<float>(xExpectedIdleTime) * _LPTimer_1msStansFor);
+
+			lptimer_tick_last = static_cast<uint32_t>(static_cast<float>(count) * _LPTimer_Timebase * 1e3f);
+
+			HAL_LPTIM_TimeOut_Start_IT(_LPTimer, 0xFFFF, count);
 
 			__asm volatile( "cpsid i" ::: "memory" );
 			__asm volatile( "dsb" );

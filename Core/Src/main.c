@@ -25,11 +25,11 @@
 #include "dac.h"
 #include "dma.h"
 #include "lptim.h"
-#include "usart.h"
 #include "rng.h"
 #include "rtc.h"
 #include "spi.h"
 #include "tim.h"
+#include "usart.h"
 #include "usb.h"
 #include "gpio.h"
 
@@ -113,7 +113,6 @@ int main(void)
   MX_RTC_Init();
   MX_USART1_UART_Init();
   MX_USB_PCD_Init();
-  MX_LPUART1_UART_Init();
   MX_USART3_UART_Init();
   MX_SPI1_Init();
   MX_SPI2_Init();

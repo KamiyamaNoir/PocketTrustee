@@ -11,7 +11,7 @@
 
 ## 硬件设计
 硬件设计发布在[OSHW Hub](https://oshwhub.com/reblock/pocket_trustee)上  
-
+ZW0919指纹模块的支持已被彻底移除，今后暂没有支持计划，拆掉这个模块可以帮助降低漏电流  
 
 ## 编译，下载，初始化说明
 1. 下载 [STM32 CubeCLT](https://www.st.com/en/development-tools/stm32cubeclt.html) 工具链  
@@ -20,9 +20,7 @@
 `cmake --preset "Release"`  
 `cd build/Release`  
 `ninja`  
-在build/Release目录下，PocketTrustee.elf 即编译产物  
-~~不要编译Release版，代码优化会带来无法预测的bug~~  
-**从commit e3f40d46 开始，可以编译Release版，并显著改善运行速度**
+在build/Release目录下，PocketTrustee.elf 即编译产物
 3. 使用 [STM32 CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html) 工具将PocketTrustee.elf 烧录到芯片上   
 4. 连接设备和电脑，应当能在设备管理器里看到新的串口设备   
 5. 使用python运行`tools/PocketTrusteeCLI/main.py`，并执行命令`connect -a --init`  
