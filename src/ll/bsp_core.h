@@ -50,8 +50,6 @@ extern "C"{
 
     void StartDefaultTask(void const * argument);
     void StartManagerTask(void const * argument);
-
-    void SysFaultHandler(int err);
 #ifdef __cplusplus
 }
 #endif

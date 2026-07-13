@@ -62,17 +62,11 @@
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-void _ttywrch(int ch) {
-  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 100);
-}
-
-int _write(int fd, char *ptr, int len) {
-  HAL_UART_Transmit(&huart1, (uint8_t *)ptr, len, 100);
-  return len;
-}
-
-int _read(int fd, char *ptr, int len) {
-  return len;
+int __io_putchar(int ch) {
+  LL_USART_TransmitData8(USART1, ch);
+  while (!LL_USART_IsActiveFlag_TC(USART1)) {}
+  LL_USART_ClearFlag_TC(USART1);
+  return 0;
 }
 /* USER CODE END PFP */
 

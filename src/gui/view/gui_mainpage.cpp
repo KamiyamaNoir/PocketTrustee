@@ -12,6 +12,8 @@
 #include "gui_cards.hpp"
 #include <cstdio>
 
+#include "driver_multiplexer.hpp"
+
 #define GUI_MAINPAGE_CTRNUM 10
 #define GUI_ICCARD_CTRNUM 4
 
@@ -95,7 +97,8 @@ void clickon_cds_id(Window& wn, Display& dis, ui_operation& opt)
 void clickon_boxcard(Window& wn, Display& dis, ui_operation& opt, int args)
 {
     if (opt != OP_ENTER) return;
-    nfc::set_route(static_cast<nfc::NFC_Route>(args));
+    // nfc::set_route(static_cast<nfc::NFC_Route>(args));
+    CoreMultiplexer::Set(static_cast<CoreMultiplexer::MultiplexerChannel>(args));
     dis.switchFocusLag(&wn_cds);
     dis.refresh_count = 0;
 }
@@ -164,7 +167,7 @@ void render_cds_texture(Scheme& sche, Control& self, bool onSelect, int args)
     render_rectangle(sche, self, onSelect);
     uint16_t off = 0;
     if (args == -1)
-        off = 192*nfc::get_route();
+        off = 192*CoreMultiplexer::Get();
     else
         off = 192*args;
     sche.texture(&texture_icmode[off], self.x+self.w/2-32, self.y+self.h/2-12, 64, 24);
@@ -172,6 +175,7 @@ void render_cds_texture(Scheme& sche, Control& self, bool onSelect, int args)
 
 void render_cds_icon(Scheme& sche, Control& self, bool onSelect)
 {
+    // TODO: Remove time-consuming method
     float vot = CoreADC::GetBatteryVoltage();
     bool charging = HAL_GPIO_ReadPin(FLG_CHG_GPIO_Port, FLG_CHG_Pin) == GPIO_PIN_RESET;
     char vot_display[6];
@@ -181,6 +185,5 @@ void render_cds_icon(Scheme& sche, Control& self, bool onSelect)
     {
         sche.texture(icon_battery_charging, 50, 110, 16, 16);
     }
-    CoreADC::RefreshAsync();
 }
 

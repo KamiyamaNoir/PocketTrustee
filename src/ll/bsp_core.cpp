@@ -4,7 +4,6 @@
 #include "bsp_rfid.h"
 #include "cmsis_os.h"
 #include "crypto_base.hpp"
-#include "driver_adc.hpp"
 #include "tim.h"
 #include "gui.hpp"
 #include "host.hpp"
@@ -55,10 +54,10 @@ void sys_startup()
     {
         LittleFS_W25Q16::Format();
         fs_err = LittleFS_W25Q16::Mount();
-        if (fs_err < 0)
-            SysFaultHandler(43);
+        if (fs_err < 0) {
+            quick_exit(0);
+        }
     }
-    CoreADC::Refresh();
 #ifndef PKT_YES_DEBUG
     core::RegisterACMDevice();
     for (;;)
@@ -68,24 +67,11 @@ void sys_startup()
             break;
     }
     core::DeinitUSB();
+#else
+    DEBUG_WARN("Enter Debug Mode");
 #endif
     // HAL_UARTEx_ReceiveToIdle_IT(&huart1, uart_buffer, sizeof(uart_buffer));
     // fingerprint_uart_callback(0);
-}
-
-void SysFaultHandler(int err)
-{
-    // char err_code[8];
-    // gui::Scheme sche(0, 0, GUI_WIDTH, GUI_HEIGHT, gui_main, gui_main.load_cache);
-    // sche
-    // .clear()
-    // .put_string(0, 0, gui::ASCII_1608, ":( It looks like your device went something wrong");
-    // sprintf(err_code, "%d", err);
-    // sche.put_string(0, 20, gui::ASCII_3216, err_code);
-    // epaper::pre_update(sche.data);
-    __disable_irq();
-    // HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
-    while (true) {}
 }
 
 void core::StartIdealTask()

@@ -7,18 +7,6 @@
 
 namespace nfc
 {
-    enum NFC_Route
-    {
-        ROUTE_NONE = 0,
-        ROUTE_C1 = 1,
-        ROUTE_C2 = 2,
-        ROUTE_C3 = 3,
-        ROUTE_C4 = 4,
-        ROUTE_PN532 = 5
-    };
-
-    void set_route(NFC_Route route);
-    NFC_Route get_route();
     void enable_transparent_mode();
     void disable_transparent_mode();
     void transparent_send_cb();
