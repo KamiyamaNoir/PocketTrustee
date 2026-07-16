@@ -4,6 +4,7 @@
 #include "bsp_rfid.h"
 #include "cmsis_os.h"
 #include "crypto_base.hpp"
+#include "driver_rtc.hpp"
 #include "tim.h"
 #include "gui.hpp"
 #include "host.hpp"
@@ -57,6 +58,19 @@ void sys_startup()
         if (fs_err < 0) {
             quick_exit(0);
         }
+    }
+
+    DEBUG_INFO("init rtc");
+    int err = CoreRtc::Init();
+    if (err < 0) {
+        DEBUG_ERROR("error occurred init rtc");
+        Error_Handler();
+    }
+    else if (err > 0) {
+        DEBUG_WARN("profile not exist");
+    }
+    else {
+        DEBUG_WARN("previous profile exist");
     }
 #ifndef PKT_YES_DEBUG
     core::RegisterACMDevice();
@@ -168,11 +182,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             break;
         }
     }
-}
-
-void HAL_RTCEx_WakeUpTimerEventCallback(RTC_HandleTypeDef *hrtc)
-{
-    UNUSED(hrtc);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)

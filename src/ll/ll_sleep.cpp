@@ -25,19 +25,17 @@ extern "C"
 		{
 			DEBUG_INFO("Sleep For %lu", xExpectedIdleTime);
 
-		    // CoreSleepTimer::StartCountingDown(xExpectedIdleTime);
+			if (xExpectedIdleTime < _LPTimer_MaximunMiliseconds - 50) {
+				auto count = static_cast<uint16_t>(static_cast<float>(xExpectedIdleTime) * _LPTimer_1msStansFor);
 
-			// 时间非常长时，不从睡眠中恢复
-			if (xExpectedIdleTime >= _LPTimer_MaximunMiliseconds - 50) {
-				lptimer_tick_last = 0;
-				return;
+				lptimer_tick_last = static_cast<uint32_t>(static_cast<float>(count) * _LPTimer_Timebase * 1e3f);
+
+				HAL_LPTIM_TimeOut_Start_IT(_LPTimer, 0xFFFF, count);
 			}
-
-			auto count = static_cast<uint16_t>(static_cast<float>(xExpectedIdleTime) * _LPTimer_1msStansFor);
-
-			lptimer_tick_last = static_cast<uint32_t>(static_cast<float>(count) * _LPTimer_Timebase * 1e3f);
-
-			HAL_LPTIM_TimeOut_Start_IT(_LPTimer, 0xFFFF, count);
+			else {
+				// 时间非常长时，不从睡眠中恢复
+				lptimer_tick_last = 0;
+			}
 
 			__asm volatile( "cpsid i" ::: "memory" );
 			__asm volatile( "dsb" );

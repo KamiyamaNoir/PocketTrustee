@@ -3,7 +3,7 @@
 #include "crypto_base.hpp"
 #include <cstring>
 #include <cstdio>
-#include "bsp_rtc.h"
+#include "driver_rtc.hpp"
 #include "zcbor_encode.h"
 #include "little_fs.hpp"
 #include "password.hpp"
@@ -179,8 +179,7 @@ void clickon_pwdgen_save(Window& wn, Display& dis, ui_operation& opt)
     if (opt != OP_ENTER) return;
     if (pwdgen_pwd[0] == '\0') return;
     //NOLINTNEXTLINE
-    rtc::TimeDate td;
-    rtc::getTimedate(&td);
+    DateTime td = CoreRtc::GetDateTime();
     char name[26];
     sprintf(name, "%d-%d-%d@%d-%d-%d", td.year, td.month, td.day, td.hour, td.minute, td.second);
 

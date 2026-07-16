@@ -9,7 +9,7 @@
 #include "gui.hpp"
 #include "little_fs.hpp"
 #include "cmsis_os.h"
-#include "bsp_rtc.h"
+#include "driver_rtc.hpp"
 #include "pin_code.hpp"
 #include "gui_manager_mode.hpp"
 
@@ -236,9 +236,8 @@ static PKT_ERR command_invoke(bool from_startup)
             .msg = "err load timestamp"
         };
         // 32bit unix time only
-        rtc::TimeDate dt {};
-        rtc::UnixToTimedate(timestamp, &dt, TIME_ZONE_OFFSET_Shanghai);
-        rtc::setTimedate(&dt);
+        auto dt = DateTime::FromUnixTime(timestamp, TIME_ZONE_Shanghai);
+        CoreRtc::SetDateTime(&dt);
 
         // send key
         send(key, 16);
@@ -493,9 +492,8 @@ PKT_ERR command_connect_req()
 
     uint32_t timestamp;
     zcbor_uint32_decode(decode_state, &timestamp);
-    rtc::TimeDate dt {};
-    rtc::UnixToTimedate(timestamp, &dt, TIME_ZONE_OFFSET_Shanghai);
-    rtc::setTimedate(&dt);
+    auto dt = DateTime::FromUnixTime(timestamp, TIME_ZONE_Shanghai);
+    CoreRtc::SetDateTime(&dt);
 
     // Display Status
     gui_main.switchFocusLag(&wn_manager_respond);

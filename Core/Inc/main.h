@@ -29,8 +29,10 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal.h"
 
+#include "stm32l4xx_ll_crc.h"
 #include "stm32l4xx_ll_dma.h"
 #include "stm32l4xx_ll_rng.h"
+#include "stm32l4xx_ll_rtc.h"
 #include "stm32l4xx_ll_usart.h"
 #include "stm32l4xx_ll_rcc.h"
 #include "stm32l4xx_ll_bus.h"

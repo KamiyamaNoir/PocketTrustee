@@ -22,6 +22,7 @@
 #include "adc.h"
 #include "aes.h"
 #include "comp.h"
+#include "crc.h"
 #include "dac.h"
 #include "dma.h"
 #include "lptim.h"
@@ -120,6 +121,7 @@ int main(void)
   MX_LPTIM2_Init();
   MX_TIM16_Init();
   MX_LPTIM1_Init();
+  MX_CRC_Init();
   /* USER CODE BEGIN 2 */
   // MPU_Config();
   /* USER CODE END 2 */

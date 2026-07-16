@@ -1,6 +1,6 @@
 #include "crypto_base.hpp"
 #include <cstring>
-#include "bsp_rtc.h"
+#include "driver_rtc.hpp"
 
 using namespace crypto;
 
@@ -104,14 +104,17 @@ CRYPTO_RESULT crypto::skeygen(const KeygenConfiguration* cfg, char* dst)
 
 CRYPTO_RESULT crypto::totp_calculate(uint8_t* key, uint8_t key_length, uint32_t* result, uint8_t step, uint32_t mask)
 {
-    rtc::UnixTime timestamp = 0;
-    rtc::TimeDate dt {};
-    rtc::getTimedate(&dt);
-    rtc::TimedateToUnix(&dt, &timestamp, TIME_ZONE_OFFSET_Shanghai);
+    uint64_t timestamp = 0;
+    auto dt = CoreRtc::GetDateTime();
+    timestamp = dt.ToUnixTime();
+
     timestamp /= step;
     // Calculate HMAC
     uint8_t message[8] = {
-        0,0,0,0,
+        static_cast<uint8_t>(timestamp >> 56),
+        static_cast<uint8_t>(timestamp >> 48),
+        static_cast<uint8_t>(timestamp >> 40),
+        static_cast<uint8_t>(timestamp >> 32),
         static_cast<uint8_t>(timestamp >> 24),
         static_cast<uint8_t>(timestamp >> 16),
         static_cast<uint8_t>(timestamp >> 8),
