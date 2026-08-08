@@ -26,6 +26,16 @@ ZW0919指纹模块的支持已被彻底移除，今后暂没有支持计划，�
 5. 使用python运行`tools/PocketTrusteeCLI/main.py`，并执行命令`connect -a --init`  
 6. 根据提示操作即可；更多关于PocketTrusteeCLI工具的说明请见后续章节  
 
+## TODO
+目前PocketTrsutee正在进行大规模代码重构  
+- [x] 迁移bsp_flash -> driver_w25q16 & ll_w25q16
+- [ ] 迁移bsp_epaper -> driver_display & ll_epaper
+- [ ] 迁移bsp_pn532 -> driver_pn532 & ll_pn532
+- [ ] 使用现代特性重写IDCard
+- [ ] 迁移bsp_rfid -> driver_rfid & ll_rfid
+- [ ] 迁移bsp_core -> ll_startup
+- [ ] 对driver和ll的解耦进行检查
+- [ ] 迁移gui -> guiv2
 
 ## PocketTrusteeCLI
 专为PocketTrustee设计的CLI工具，可以用于添加/删除/编辑 密码，ID卡，TOTP，以及进行数据备份和还原等  

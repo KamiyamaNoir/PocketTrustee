@@ -10,7 +10,9 @@ static constexpr float _LPTimer_Timebase = 1.0f / (_LPTimer_Clock / _LPTimer_Pre
 static constexpr float _LPTimer_1msStansFor = 1.0f / _LPTimer_Timebase * 1e-3f;
 static constexpr uint32_t _LPTimer_MaximunMiliseconds = static_cast<uint32_t>(0xFFFF * _LPTimer_Timebase * 1e3f);
 
-__IO uint32_t lptimer_tick_last;
+namespace {
+	__IO uint32_t lptimer_tick_last;
+}
 
 void HAL_LPTIM_CompareMatchCallback(LPTIM_HandleTypeDef *hlptim) {
     if (hlptim == _LPTimer) {

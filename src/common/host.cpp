@@ -10,6 +10,7 @@
 #include "little_fs.hpp"
 #include "cmsis_os.h"
 #include "driver_rtc.hpp"
+#include "driver_w25q16.hpp"
 #include "pin_code.hpp"
 #include "gui_manager_mode.hpp"
 
@@ -103,6 +104,7 @@ char* Host::getDeviceName()
 
 static PKT_ERR command_invoke(bool from_startup)
 {
+    lfs_t * lfs = CoreLfs::getInstance();
     if (cdc_receive_ring_buffer.is_empty()) return {
         .err = 0,
         .err_fs = LFS_ERR_OK,
@@ -171,7 +173,7 @@ static PKT_ERR command_invoke(bool from_startup)
     if (IS_COMMAND(require_desc, "initialize") && from_startup)
     {
         // Format all data
-        int err = LittleFS_W25Q16::Format();
+        int err = lfs_format(lfs, ExternalW25Q16::getConfig());
 
         if (err < 0)
         {
@@ -180,7 +182,7 @@ static PKT_ERR command_invoke(bool from_startup)
             NVIC_SystemReset();
         }
 
-        LittleFS_W25Q16::Mount();
+        lfs_mount(lfs, ExternalW25Q16::getConfig());
 
         // Set AES key
         auto* key = new uint8_t[16];
@@ -504,6 +506,7 @@ PKT_ERR command_connect_req()
 
 PKT_ERR invoke_fswrite(zcbor_state_t* zcbor_state)
 {
+    lfs_t * lfs = CoreLfs::getInstance();
     zcbor_string zcbor_str = {
         .value = nullptr,
         .len = 0,
@@ -523,12 +526,12 @@ PKT_ERR invoke_fswrite(zcbor_state_t* zcbor_state)
 
     ZCBOR_TO_CSTRING(zcbor_str, path);
 
-    uint8_t file_buffer[LittleFS_W25Q16::CACHE_SIZE];
+    uint8_t file_buffer[ExternalW25Q16::kCacheSize];
     lfs_file_config open_cfg = {
         .buffer = file_buffer,
     };
-    FileDelegate file;
-    int err = file.open(path, LFS_O_RDWR | LFS_O_CREAT, &open_cfg);
+    LfsFileGuard file;
+    int err = file.open(lfs, path, LFS_O_RDWR | LFS_O_CREAT, &open_cfg);
 
     if (err < 0) return {
         .err = __LINE__,
@@ -571,7 +574,7 @@ PKT_ERR invoke_fswrite(zcbor_state_t* zcbor_state)
             .msg = "err decode data"
         };
 
-        auto wr_err = lfs_file_write(&fs_w25q16, &file.instance, zcbor_str.value, zcbor_str.len);
+        auto wr_err = lfs_file_write(lfs, &file.instance, zcbor_str.value, zcbor_str.len);
 
         if (wr_err < 0) return {
             .err = __LINE__,
@@ -606,6 +609,7 @@ PKT_ERR invoke_fswrite(zcbor_state_t* zcbor_state)
 
 PKT_ERR invoke_fsread(zcbor_state_t* zcbor_state)
 {
+    lfs_t * lfs = CoreLfs::getInstance();
     bool success = false;
     zcbor_string zcbor_str = {
         .value = nullptr,
@@ -624,12 +628,12 @@ PKT_ERR invoke_fsread(zcbor_state_t* zcbor_state)
 
     ZCBOR_TO_CSTRING(zcbor_str, path);
 
-    uint8_t file_buffer[LittleFS_W25Q16::CACHE_SIZE];
+    uint8_t file_buffer[ExternalW25Q16::kCacheSize];
     lfs_file_config open_cfg = {
         .buffer = file_buffer,
     };
-    FileDelegate file;
-    int err = file.open(path, LFS_O_RDONLY, &open_cfg);
+    LfsFileGuard file;
+    int err = file.open(lfs, path, LFS_O_RDONLY, &open_cfg);
 
     if (err < 0) return {
         .err = __LINE__,
@@ -659,7 +663,7 @@ PKT_ERR invoke_fsread(zcbor_state_t* zcbor_state)
         constexpr int p_size = 128;
         uint8_t buffer[p_size];
 
-        int fsread = lfs_file_read(&fs_w25q16, &file.instance, buffer, p_size);
+        int fsread = lfs_file_read(lfs, &file.instance, buffer, p_size);
 
         if (fsread < 0) return {
             .err = __LINE__,
@@ -730,6 +734,7 @@ PKT_ERR invoke_fsread(zcbor_state_t* zcbor_state)
 
 PKT_ERR invoke_fs_ls(zcbor_state_t* zcbor_state)
 {
+    lfs_t * lfs = CoreLfs::getInstance();
     zcbor_string zcbor_str = {
         .value = nullptr,
         .len = 0
@@ -751,9 +756,9 @@ PKT_ERR invoke_fs_ls(zcbor_state_t* zcbor_state)
 
     ZCBOR_TO_CSTRING(zcbor_str, path);
 
-    DirectoryDelegate dir;
+    LfsDirectoryGuard dir;
 
-    int err = dir.open(path);
+    int err = dir.open(lfs, path);
 
     if (err < 0) return {
         .err = __LINE__,
@@ -764,7 +769,7 @@ PKT_ERR invoke_fs_ls(zcbor_state_t* zcbor_state)
     for (;;)
     {
         lfs_info info {};
-        int read_err = lfs_dir_read(&fs_w25q16, &dir.instance, &info);
+        int read_err = lfs_dir_read(lfs, &dir.instance, &info);
         if (read_err < 0) return {
             .err = __LINE__,
             .err_fs = read_err,
@@ -819,6 +824,7 @@ PKT_ERR invoke_fs_ls(zcbor_state_t* zcbor_state)
 
 PKT_ERR invoke_fs_rm(zcbor_state_t* zcbor_state)
 {
+    lfs_t * lfs = CoreLfs::getInstance();
     zcbor_string zcbor_str = {
         .value = nullptr,
         .len = 0
@@ -841,7 +847,7 @@ PKT_ERR invoke_fs_rm(zcbor_state_t* zcbor_state)
 
     ZCBOR_TO_CSTRING(zcbor_str, path);
 
-    auto err = lfs_remove(&fs_w25q16, path);
+    auto err = lfs_remove(lfs, path);
     if (err < 0)
         return {
             .err = __LINE__,
@@ -860,6 +866,7 @@ PKT_ERR invoke_fs_rm(zcbor_state_t* zcbor_state)
 
 PKT_ERR invoke_fs_rename(zcbor_state_t* zcbor_state)
 {
+    lfs_t * lfs = CoreLfs::getInstance();
     zcbor_string zcbor_str = {
         .value = nullptr,
         .len = 0
@@ -897,7 +904,7 @@ PKT_ERR invoke_fs_rename(zcbor_state_t* zcbor_state)
 
     ZCBOR_TO_CSTRING(zcbor_str, new_path);
 
-    auto err = lfs_rename(&fs_w25q16, old_path, new_path);
+    auto err = lfs_rename(lfs, old_path, new_path);
     if (err < 0)
         return {
             .err = __LINE__,
@@ -916,6 +923,7 @@ PKT_ERR invoke_fs_rename(zcbor_state_t* zcbor_state)
 
 PKT_ERR invoke_fs_mkdir(zcbor_state_t* zcbor_state)
 {
+    lfs_t * lfs = CoreLfs::getInstance();
     zcbor_string zcbor_str = {
         .value = nullptr,
         .len = 0,
@@ -937,7 +945,7 @@ PKT_ERR invoke_fs_mkdir(zcbor_state_t* zcbor_state)
 
     ZCBOR_TO_CSTRING(zcbor_str, path);
 
-    auto err = lfs_mkdir(&fs_w25q16, path);
+    auto err = lfs_mkdir(lfs, path);
 
     if (err < 0)
         return {
@@ -955,7 +963,8 @@ PKT_ERR invoke_fs_mkdir(zcbor_state_t* zcbor_state)
 
 PKT_ERR invoke_fs_state()
 {
-    auto err = lfs_fs_size(&fs_w25q16);
+    lfs_t * lfs = CoreLfs::getInstance();
+    auto err = lfs_fs_size(lfs);
 
     if (err < 0)
         return {

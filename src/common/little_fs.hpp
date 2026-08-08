@@ -4,22 +4,15 @@
 #include "main.h"
 #include "lfs.h"
 
-extern lfs_t fs_w25q16;
-
-class LittleFS_W25Q16
+class CoreLfs
 {
+    CoreLfs() = default;
+    ~CoreLfs() = default;
 public:
-    static int Mount();
-    static int Format();
+    CoreLfs(CoreLfs&) = delete;
+    CoreLfs& operator=(CoreLfs&) = delete;
 
-    // 将一个Sector作为一个Block供LFS使用，对于LFS来说一共512个Block
-    enum
-    {
-        SECTOR_SIZE = 4096,
-        PAGE_SIZE = 256,
-        CACHE_SIZE = 256,
-        LOOKAHEAD_SIZE = 32,
-    };
+    static lfs_t * getInstance();
 
     static const char* interpret_error(int err)
     {
@@ -78,77 +71,84 @@ public:
     }
 };
 
-class FileDelegate
+class LfsFileGuard
 {
 public:
-    ~FileDelegate()
+    ~LfsFileGuard()
     {
-        if (_opened)
-            lfs_file_close(&fs_w25q16, &instance);
+        if (opened_)
+            lfs_file_close(lfs_, &instance);
     }
 
-    int open(const char* path, int flags, const lfs_file_config* config)
+    int open(lfs_t * lfs, const char* path, int flags, const lfs_file_config* config)
     {
-        int err = lfs_file_opencfg(&fs_w25q16, &instance, path, flags, config);
+        lfs_ = lfs;
+        int err = lfs_file_opencfg(lfs, &instance, path, flags, config);
         if (err >= 0)
-            _opened = true;
+            opened_ = true;
         return err;
+    }
+
+    lfs_file_t* operator->() {
+        return &instance;
+    }
+
+    lfs_file_t operator*() const {
+        return instance;
     }
 
     lfs_file_t instance {};
 private:
-    bool _opened = false;
+    lfs_t * lfs_ {};
+    bool opened_ = false;
 };
 
-class DirectoryDelegate
+class LfsDirectoryGuard
 {
 public:
-    ~DirectoryDelegate()
+    ~LfsDirectoryGuard()
     {
-        if (_opened)
-            lfs_dir_close(&fs_w25q16, &instance);
+        if (opened_)
+            lfs_dir_close(lfs_, &instance);
     }
 
-    int open(const char* path)
+    int open(lfs_t * lfs, const char* path)
     {
-        int err = lfs_dir_open(&fs_w25q16, &instance, path);
+        lfs_ = lfs;
+        int err = lfs_dir_open(lfs, &instance, path);
         if (err >= 0)
-            _opened = true;
+            opened_ = true;
         return err;
     }
 
     int count()
     {
-        uint32_t current = lfs_dir_tell(&fs_w25q16, &instance);
-        lfs_dir_rewind(&fs_w25q16, &instance);
+        uint32_t current = lfs_dir_tell(lfs_, &instance);
+        lfs_dir_rewind(lfs_, &instance);
         lfs_info info {};
         int count = 0;
         for (;;)
         {
-            int err = lfs_dir_read(&fs_w25q16, &instance, &info);
+            int err = lfs_dir_read(lfs_, &instance, &info);
             if (err > 0)
                 count++;
             else if (err == 0)
             {
-                lfs_dir_seek(&fs_w25q16, &instance, current);
+                lfs_dir_seek(lfs_, &instance, current);
                 return ++count;
             }
             else
             {
-                lfs_dir_seek(&fs_w25q16, &instance, current);
+                lfs_dir_seek(lfs_, &instance, current);
                 return err;
             }
         }
     }
 
-    int rewind()
-    {
-        return lfs_dir_rewind(&fs_w25q16, &instance);
-    }
-
     lfs_dir_t instance {};
 private:
-    bool _opened = false;
+    lfs_t * lfs_ {};
+    bool opened_ = false;
 };
 
 #endif

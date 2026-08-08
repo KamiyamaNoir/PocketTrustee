@@ -1,5 +1,6 @@
 #include "password.hpp"
 #include "little_fs.hpp"
+#include "driver_w25q16.hpp"
 #include "zcbor_common.h"
 #include "zcbor_decode.h"
 #include "zcbor_encode.h"
@@ -9,6 +10,7 @@
 
 PKT_ERR PasswordFile::load(const char* pwd_name)
 {
+    lfs_t * lfs = CoreLfs::getInstance();
     if (pwd_name == nullptr || pwd_name[0] == '\0')
     {
         return {
@@ -34,15 +36,15 @@ PKT_ERR PasswordFile::load(const char* pwd_name)
     strcat(path, pwd_name);
     strcat(path, pwd_suffix);
 
-    uint8_t file_buffer[LittleFS_W25Q16::CACHE_SIZE];
+    uint8_t file_buffer[ExternalW25Q16::kCacheSize];
     lfs_file_config open_cfg = {
         .buffer = file_buffer,
     };
     uint8_t fbytes_encrypto[PWD_FILE_SIZE_MAX];
     uint8_t fbytes_plaintext[PWD_FILE_SIZE_MAX];
 
-    FileDelegate file;
-    int err = file.open(path, LFS_O_RDONLY, &open_cfg);
+    LfsFileGuard file;
+    int err = file.open(lfs, path, LFS_O_RDONLY, &open_cfg);
     if (err < 0)
         return {
             .err = -1,
@@ -50,7 +52,7 @@ PKT_ERR PasswordFile::load(const char* pwd_name)
             .msg = "fail to open pwd file"
         };
 
-    err = lfs_file_read(&fs_w25q16, &file.instance, fbytes_encrypto, PWD_FILE_SIZE_MAX);
+    err = lfs_file_read(lfs, &file.instance, fbytes_encrypto, PWD_FILE_SIZE_MAX);
     if (err < 0)
         return {
             .err = -1,
@@ -108,6 +110,7 @@ PKT_ERR PasswordFile::load(const char* pwd_name)
 
 PKT_ERR PasswordFile::save()
 {
+    lfs_t * lfs = CoreLfs::getInstance();
     if (name[0] == '\0' || strlen(name) > PWD_NAME_MAX)
     {
         return {
@@ -160,12 +163,12 @@ PKT_ERR PasswordFile::save()
             .msg = "pwd encryption failed"
         };
 
-    uint8_t file_cache[LittleFS_W25Q16::CACHE_SIZE];
+    uint8_t file_cache[ExternalW25Q16::kCacheSize];
     lfs_file_config open_cfg = {
         .buffer = file_cache,
     };
-    FileDelegate file;
-    int err = file.open(path, LFS_O_CREAT | LFS_O_WRONLY, &open_cfg);
+    LfsFileGuard file;
+    int err = file.open(lfs, path, LFS_O_CREAT | LFS_O_WRONLY, &open_cfg);
     if (err < 0)
         return {
             .err = __LINE__,
@@ -173,7 +176,7 @@ PKT_ERR PasswordFile::save()
             .msg = "pwd file open failed"
         };
 
-    err = lfs_file_write(&fs_w25q16, &file.instance, encrypto_payload, pad_size);
+    err = lfs_file_write(lfs, &file.instance, encrypto_payload, pad_size);
 
     if (err < 0)
         return {
@@ -191,6 +194,7 @@ PKT_ERR PasswordFile::save()
 
 PKT_ERR PasswordFile::remove(const char* name)
 {
+    lfs_t * lfs = CoreLfs::getInstance();
     if (name == nullptr || strlen(name) > PWD_NAME_MAX)
         return {
             .err = __LINE__,
@@ -203,7 +207,7 @@ PKT_ERR PasswordFile::remove(const char* name)
     strcat(path, name);
     strcat(path, pwd_suffix);
 
-    int err = lfs_remove(&fs_w25q16, path);
+    int err = lfs_remove(lfs, path);
 
     if (err < 0)
         return {

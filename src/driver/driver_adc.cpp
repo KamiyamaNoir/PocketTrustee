@@ -1,10 +1,6 @@
 #include "driver_adc.hpp"
 #include "adc.h"
 
-extern int ll_adc_init();
-extern int ll_adc_powerdown();
-extern int ll_adc_get_value(CoreADC::LL_ADC_Data * p_value, CancellationToken * token);
-
 float CoreADC::GetBatteryVoltage() {
     LL_ADC_Data data {};
     ll_adc_init();

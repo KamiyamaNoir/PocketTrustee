@@ -20,4 +20,6 @@ public:
     static void Set(MultiplexerChannel channel);
 };
 
+int ll_multiplexer_set(CoreMultiplexer::MultiplexerChannel channel);
+
 #endif //POCKETTRUSTEE_DRIVER_MULTIPLEXER_HPP

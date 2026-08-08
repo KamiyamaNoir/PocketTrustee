@@ -13,8 +13,10 @@ public:
 
     PKT_ERR update()
     {
-        DirectoryDelegate dir;
-        int err = dir.open(base_path);
+        lfs_t * lfs = CoreLfs::getInstance();
+
+        LfsDirectoryGuard dir;
+        int err = dir.open(lfs, base_path);
 
         if (err < 0)
             return {
@@ -33,13 +35,13 @@ public:
             };
 
         _item_count = 0;
-        dir.rewind();
+        lfs_dir_rewind(lfs, &dir.instance);
         uint8_t pstart = (_item_index / PAGE_SIZE) * PAGE_SIZE;
         char (*pcache)[NAME_MAX] = _name_cache;
         for (uint32_t i = 0; i < dir_count; i++)
         {
             lfs_info info {};
-            err = lfs_dir_read(&fs_w25q16, &dir.instance, &info);
+            err = lfs_dir_read(lfs, &dir.instance, &info);
 
             if (err < 0)
                 return {

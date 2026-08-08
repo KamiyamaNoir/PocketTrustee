@@ -1,8 +1,8 @@
 #include "driver_multiplexer.hpp"
 
-extern int ll_multiplexer_set(CoreMultiplexer::MultiplexerChannel channel);
-
-static CoreMultiplexer::MultiplexerChannel _channel = CoreMultiplexer::MUX_NONE;
+namespace {
+    CoreMultiplexer::MultiplexerChannel _channel = CoreMultiplexer::MUX_NONE;
+}
 
 CoreMultiplexer::MultiplexerChannel CoreMultiplexer::Get() {
     return _channel;

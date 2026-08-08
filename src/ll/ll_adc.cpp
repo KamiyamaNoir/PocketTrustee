@@ -1,7 +1,9 @@
 #include "driver_adc.hpp"
 #include "adc.h"
 
-static uint16_t adc_buffer[3];
+namespace {
+    uint16_t adc_buffer[3];
+}
 
 int ll_adc_init() {
     MX_ADC1_Init();

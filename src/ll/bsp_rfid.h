@@ -7,6 +7,7 @@
 #ifdef __cplusplus
 
 #include "little_fs.hpp"
+#include "driver_w25q16.hpp"
 
 namespace rfid
 {
@@ -25,6 +26,7 @@ namespace rfid
 
         int load(const char* name)
         {
+            lfs_t * lfs = CoreLfs::getInstance();
             if (name == nullptr || strlen(name) > IDCARD_NAME_MAX)
             {
                 return -1;
@@ -35,16 +37,16 @@ namespace rfid
             strcat(path, name);
             strcat(path, idcard_suffix);
 
-            FileDelegate file;
+            LfsFileGuard file;
 
-            uint8_t file_buffer[LittleFS_W25Q16::CACHE_SIZE];
+            uint8_t file_buffer[ExternalW25Q16::kCacheSize];
             lfs_file_config open_cfg = {
                 .buffer = file_buffer,
             };
-            int err = file.open(path, LFS_O_RDONLY, &open_cfg);
+            int err = file.open(lfs, path, LFS_O_RDONLY, &open_cfg);
             if (err < 0) return err;
 
-            err = lfs_file_read(&fs_w25q16, &file.instance, this, sizeof(*this));
+            err = lfs_file_read(lfs, &file.instance, this, sizeof(*this));
             if (err < 0)
                 return err;
 
@@ -53,6 +55,7 @@ namespace rfid
 
         int save(const char* name)
         {
+            lfs_t * lfs = CoreLfs::getInstance();
             if (name == nullptr || strlen(name) > IDCARD_NAME_MAX)
             {
                 return -1;
@@ -63,16 +66,16 @@ namespace rfid
             strcat(path, name);
             strcat(path, idcard_suffix);
 
-            FileDelegate file;
+            LfsFileGuard file;
 
-            uint8_t file_buffer[LittleFS_W25Q16::CACHE_SIZE];
+            uint8_t file_buffer[ExternalW25Q16::kCacheSize];
             lfs_file_config open_cfg = {
                 .buffer = file_buffer,
             };
-            int err = file.open(path, LFS_O_RDWR | LFS_O_CREAT, &open_cfg);
+            int err = file.open(lfs, path, LFS_O_RDWR | LFS_O_CREAT, &open_cfg);
             if (err < 0) return err;
 
-            err = lfs_file_write(&fs_w25q16, &file.instance, this, sizeof(*this));
+            err = lfs_file_write(lfs, &file.instance, this, sizeof(*this));
             if (err < 0)
                 return err;
 

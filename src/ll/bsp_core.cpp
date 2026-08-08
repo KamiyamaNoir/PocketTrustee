@@ -10,6 +10,7 @@
 #include "host.hpp"
 #include "usart.h"
 #include "little_fs.hpp"
+#include "driver_w25q16.hpp"
 
 extern gui::Display gui_main;
 
@@ -24,7 +25,7 @@ extern osThreadId IdealTaskHandle;
 
 void HAL_Delay(uint32_t Delay)
 {
-    osDelay(Delay);
+    vTaskDelay(Delay);
 }
 
 // static uint8_t uart_buffer[128];
@@ -50,11 +51,14 @@ void sys_startup()
     rfid::set_drive_mode(rfid::STOP);
     cmox_init_arg_t init_target = {CMOX_INIT_TARGET_L4, nullptr};
     cmox_initialize(&init_target);
-    int fs_err = LittleFS_W25Q16::Mount();
+
+    lfs_t * lfs = CoreLfs::getInstance();
+
+    int fs_err = lfs_mount(lfs, ExternalW25Q16::getConfig());
     if (fs_err < 0)
     {
-        LittleFS_W25Q16::Format();
-        fs_err = LittleFS_W25Q16::Mount();
+        lfs_format(lfs, ExternalW25Q16::getConfig());
+        fs_err = lfs_mount(lfs, ExternalW25Q16::getConfig());
         if (fs_err < 0) {
             quick_exit(0);
         }

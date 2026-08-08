@@ -1,14 +1,18 @@
 #include "driver_rtc.hpp"
 #include "common_crc.hpp"
 
-__PACKED_STRUCT RtcBackData {
-    uint32_t uuid1, uuid2, uuid3;
+namespace {
+    __PACKED_STRUCT RtcBackData {
+        uint32_t uuid1, uuid2, uuid3;
 #ifndef STM32L4
-    uint32_t store_unixtime_h, store_unixtime_l;
+        uint32_t store_unixtime_h, store_unixtime_l;
 #endif
-    uint32_t crash_id;
-    uint32_t crc32;
-} static rtc_record_;
+        uint32_t crash_id;
+        uint32_t crc32;
+    };
+
+    RtcBackData rtc_record_;
+}
 
 int CoreRtc::Init() {
     ll_rtc_base_init();

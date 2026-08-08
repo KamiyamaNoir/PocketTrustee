@@ -3,6 +3,7 @@
 #include <cstring>
 #include "gui_resource.h"
 #include "little_fs.hpp"
+#include "driver_w25q16.hpp"
 
 using namespace gui;
 
@@ -357,7 +358,8 @@ void Display::process(ui_operation operation)
 
 PKT_ERR Window::load(Display& dis) const
 {
-    uint8_t buffer[LittleFS_W25Q16::CACHE_SIZE];
+    lfs_t * lfs = CoreLfs::getInstance();
+    uint8_t buffer[ExternalW25Q16::kCacheSize];
     lfs_file_config open_cfg = {
         .buffer = buffer,
     };
@@ -371,15 +373,15 @@ PKT_ERR Window::load(Display& dis) const
             .msg = nullptr
         };
     }
-    FileDelegate file;
-    int err = file.open(res->path, LFS_O_RDONLY, &open_cfg);
+    LfsFileGuard file;
+    int err = file.open(lfs, res->path, LFS_O_RDONLY, &open_cfg);
     if (err < 0)
         return {
             .err = -1,
             .err_fs = err,
             .msg = "Fail to open res"
         };
-    err = lfs_file_read(&fs_w25q16, &file.instance, dis.load_cache, res->rw*res->rh/8);
+    err = lfs_file_read(lfs, &file.instance, dis.load_cache, res->rw*res->rh/8);
     if (err < 0)
         return {
             .err = -1,

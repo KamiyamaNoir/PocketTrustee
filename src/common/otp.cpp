@@ -3,12 +3,15 @@
 #include "aes.h"
 #include "crypto_base.hpp"
 #include "little_fs.hpp"
+#include "driver_w25q16.hpp"
 #include "zcbor_common.h"
 #include "zcbor_decode.h"
 
 PKT_ERR OTP_TOTP::load(const char* totp_name)
 {
-    uint8_t file_buffer[LittleFS_W25Q16::CACHE_SIZE];
+    lfs_t * lfs = CoreLfs::getInstance();
+
+    uint8_t file_buffer[ExternalW25Q16::kCacheSize];
     uint8_t cache[TOTP_FILE_SIZE_MAX];
     uint8_t plaintext[TOTP_FILE_SIZE_MAX];
     char path[TOTP_NAME_MAX + sizeof(totp_dir_base) + sizeof(totp_suffix)] {};
@@ -37,8 +40,8 @@ PKT_ERR OTP_TOTP::load(const char* totp_name)
     lfs_file_config open_cfg = {
         .buffer = file_buffer,
     };
-    FileDelegate file;
-    int err = file.open(path, LFS_O_RDONLY, &open_cfg);
+    LfsFileGuard file;
+    int err = file.open(lfs, path, LFS_O_RDONLY, &open_cfg);
     if (err < 0)
         return {
             .err = -1,
@@ -46,7 +49,7 @@ PKT_ERR OTP_TOTP::load(const char* totp_name)
             .msg = "Totp fail to open file"
         };
 
-    err = lfs_file_read(&fs_w25q16, &file.instance, cache, TOTP_FILE_SIZE_MAX);
+    err = lfs_file_read(lfs, &file.instance, cache, TOTP_FILE_SIZE_MAX);
     if (err < 0)
         return {
             .err = -1,
