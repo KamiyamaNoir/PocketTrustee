@@ -7,7 +7,8 @@ namespace {
     void poll_for_spi_ready() {
         uint16_t timeout = 1000;
         while (kSPI->State != HAL_SPI_STATE_READY && timeout) {
-            HAL_Delay(0);
+            // TODO: find out a way that only force task reschedule while keeping timeout function work
+            HAL_Delay(1);
             --timeout;
         }
     }
@@ -27,7 +28,7 @@ namespace {
 
     void receive_data(uint8_t* rx_data, const uint16_t len) {
         if (len < 16)
-            HAL_SPI_Receive(&hspi1, rx_data, len, HAL_MAX_DELAY);
+            HAL_SPI_Receive(&hspi1, rx_data, len, 100);
         else {
             HAL_SPI_Receive_DMA(&hspi1, rx_data, len);
             poll_for_spi_ready();

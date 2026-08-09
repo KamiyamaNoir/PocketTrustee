@@ -29,7 +29,7 @@ ZW0919指纹模块的支持已被彻底移除，今后暂没有支持计划，�
 ## TODO
 目前PocketTrsutee正在进行大规模代码重构  
 - [x] 迁移bsp_flash -> driver_w25q16 & ll_w25q16
-- [ ] 迁移bsp_epaper -> driver_display & ll_epaper
+- [x] 迁移bsp_epaper -> driver_display & ll_epaper
 - [ ] 迁移bsp_pn532 -> driver_pn532 & ll_pn532
 - [ ] 使用现代特性重写IDCard
 - [ ] 迁移bsp_rfid -> driver_rfid & ll_rfid

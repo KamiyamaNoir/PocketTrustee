@@ -1,5 +1,5 @@
 #include "gui.hpp"
-#include "bsp_epaper.h"
+#include "driver_display.hpp"
 #include <cstring>
 #include "gui_resource.h"
 #include "little_fs.hpp"
@@ -11,10 +11,24 @@ using namespace gui;
 static uint8_t gram_cache[GUI_ARRAY];
 static uint8_t gram_end[GUI_ARRAY];
 
+namespace {
+    void full_update(const uint8_t* data) {
+        PocketTrustee_LowLayer::display::update(data, 0);
+    }
+
+    void part_update(const uint8_t* data) {
+        PocketTrustee_LowLayer::display::update(data, 2);
+    }
+
+    void fast_update(const uint8_t* data) {
+        PocketTrustee_LowLayer::display::update(data, 1);
+    }
+}
+
 static EPD_Handler handler {
-    .full_update = epaper::pre_update,
-    .fast_update = epaper::update_fast,
-    .part_update = epaper::update_part_full
+    .full_update = full_update,
+    .fast_update = fast_update,
+    .part_update = part_update
 };
 
 void gui::render_rectangle(Scheme& sche, Control& self, bool onSelect)
